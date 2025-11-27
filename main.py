@@ -14,6 +14,19 @@ prev_wheel_revs = None
 prev_wheel_event_time = None
 
 
+def notification_handler_old(sender, data):
+    """This will be called every time the device sends a notification."""
+    print(data)
+
+async def fx_connect_to_device():
+    print("Trying to connect to KICKR SNAP...")
+
+    async with BleakClient(DEVICE_ID) as client:
+        if client.is_connected:
+            print("Connected to KICKR SNAP!")
+        else:
+            print("Failed to connect.")
+
 
 def notification_handler(sender, data): # sender is characteristic handle/ID given by bleak, data is the raw bytes we get from the machine
     global prev_crank_revs, prev_crank_event_time, prev_wheel_revs, prev_wheel_event_time       # it will read and write variables in the global envs 
@@ -102,7 +115,7 @@ async def fx_connect_to_device():
         if client.is_connected:
             print("Connected to KICKR SNAP!")
             # Subscribe to notifications
-            await client.start_notify(CHAR_UUID, notification_handler)
+            await client.start_notify(CHAR_UUID, notification_handler_old)
             print("Subscribed to notifications. Waiting for data...")
             
             # Keep the program running to receive notifications
@@ -149,19 +162,6 @@ asyncio.run(fx_connect_to_device())
 
 
 
-# NOTIFICATION SENDER FUNCTION THAT ONLY SENDS THE RAW BYTES DATA STRING
-# def notification_handler(sender, data):
-#     """This will be called every time the device sends a notification."""
-#     print(data)
-
-# async def fx_connect_to_device():
-#     print("Trying to connect to KICKR SNAP...")
-
-#     async with BleakClient(DEVICE_ID) as client:
-#         if client.is_connected:
-#             print("Connected to KICKR SNAP!")
-#         else:
-#             print("Failed to connect.")
 
 
 
