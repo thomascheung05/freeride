@@ -6,9 +6,8 @@ import win32ui
 
 
 
-def capture_window(filename="window_capture.png"):
-    hwnd = '329678'
-    # hwnd = win32gui.FindWindow(None, title)
+def capture_window(title, filename="window_capture.png"):
+    hwnd = win32gui.FindWindow(None, title)
     if not hwnd:
         print("Window not found!")
         return
@@ -41,53 +40,25 @@ def capture_window(filename="window_capture.png"):
 
     print(f"Captured {filename}")
 
-capture_window()
+capture_window('LetsView [Cast]')
 
 
 
 
 
-# def list_letsview_windows():
-#     def enum_windows(hwnd, results):
-#         title = win32gui.GetWindowText(hwnd)
-#         if "LetsView" in title:
-#             results.append((hwnd, title))
-#     windows = []
-#     win32gui.EnumWindows(enum_windows, windows)
-#     return windows
-# for hwnd, title in list_letsview_windows():
-#     print(f"HWND: {hwnd}, Title: {title}")
-
-
-
-
-
-# WINDOW_TITLE  = "LetsView"
-
-# def get_window(title):
-#     windows = gw.getWindowsWithTitle(title)
-#     if not windows:
-#         return None
-#     return windows[0]
-
-# def main():
-#     print("Looking for LetsView window...")
-#     while True:
-#         window = get_window(WINDOW_TITLE)
-#         if window is None:
-#             print("Window not found. Waiting...")
-#             time.sleep(2)
-#             continue
-
-#         # Capture the entire window
-#         left, top, width, height = window.left, window.top, window.width, window.height
-#         screenshot = pyautogui.screenshot(region=(left, top, width, height))
-        
-#         # Save the screenshot
-#         screenshot.save("letsview_capture.png")
-#         print(f"Screenshot saved! Size: {width}x{height}")
-#         break  # stop after one capture
-
-# if __name__ == "__main__":
-#     main()
+def list_letsview_windows():
+    def enum_windows(hwnd, results):
+        title = win32gui.GetWindowText(hwnd)
+        if "LetsView" in title:
+            results.append((hwnd, title))
     
+    windows = []
+    win32gui.EnumWindows(enum_windows, windows)
+    
+    if not windows:
+        print("No LetsView windows found.")
+    else:
+        for hwnd, title in windows:
+            print(f"HWND: {hwnd}, Title: {title}")
+
+
