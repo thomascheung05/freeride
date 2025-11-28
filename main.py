@@ -8,6 +8,7 @@ import pyautogui
 import time
 import pandas as pd
 import os
+import numpy as np
 
 
 def list_letsview_windows():
@@ -27,7 +28,7 @@ def list_letsview_windows():
 
 
 
-def get_window_relative_bbox(window_title):
+def get_window_relative_bbox(window_title,save_screenshot_path="bbox_TESGING_capture.png"):
     # Find the window
     hwnd = win32gui.FindWindow(None, window_title)
     if not hwnd:
@@ -57,12 +58,18 @@ def get_window_relative_bbox(window_title):
 
     bbox = (rel_left, rel_top, rel_right, rel_bottom)
     print(f"Bounding box relative to window: {bbox}")
+    screenshot = capture_window_region(window_title, bbox)
+    if screenshot:
+        screenshot.save(save_screenshot_path)
+        print(f"Screenshot of bbox saved to {os.path.abspath(save_screenshot_path)}")
+    else:
+        print("Failed to capture screenshot of bbox.")
     return bbox
 
 
 
 
-def capture_window_region(title, bbox, filename="window_capture.png"):
+def capture_window_region(title, bbox):
     hwnd = win32gui.FindWindow(None, title) # stores the window in this variable
     if not hwnd:
         print("Window not found!")
@@ -88,9 +95,7 @@ def capture_window_region(title, bbox, filename="window_capture.png"):
         (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
         bmpstr, 'raw', 'BGRX', 0, 1
     )
-
     cropped_img = img.crop(bbox)    # crops the image to only the bounding box
-    cropped_img.save(filename)      # Saves image
     
     # free up resources 
     win32gui.DeleteObject(bmp.GetHandle())
@@ -104,11 +109,7 @@ def capture_window_region(title, bbox, filename="window_capture.png"):
 
 
 
-# bbox = get_window_relative_bbox("LetsView [Cast]")
-bbox = (129, 266, 264, 342)  # left, top, right, bottom relative to window
-window_title = "LetsView [Cast]"
-data = []
-start_time = time.time()
+
 
 
 
@@ -125,18 +126,18 @@ tesseract_path = r"C:\Users\Thomas\Main\freeride\tesseract\tesseract.exe"
 pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
 # --- Real-time logger ---
-def log_numbers(window_title, bbox, interval=1.0, duration=60, output_csv="numbers.csv"):
+def log_numbers(window_title, bbox, captureinterval, totaldistance, output_csv):
     """
     Capture the window region every `interval` seconds for `duration` seconds
     and save timestamp + number to CSV.
     """
     data = []
     start_time = time.time()
-    end_time = start_time + duration
 
-    print(f"Logging numbers from '{window_title}' every {interval}s for {duration}s...")
 
-    while time.time() < end_time:
+    print(f"Logging numbers from '{window_title}' every {captureinterval}s for {totaldistance}km...")
+    number = 0
+    while True:
         img = capture_window_region(window_title, bbox)
         if img:
             number = extract_number_from_image(img)
@@ -145,20 +146,35 @@ def log_numbers(window_title, bbox, interval=1.0, duration=60, output_csv="numbe
                 print(f"[{timestamp:.1f}s] Number: {number}")
                 data.append([timestamp, number])
             else:
-                print(f"[{timestamp:.1f}s] Could not read number.")
-        time.sleep(interval)
+                print(f"[{timestamp:.1f}s] Number: NA")
+                data.append([timestamp, np.nan])
+        last_save_time = 0
+        if time.time() - last_save_time >= captureinterval*2:
+            df = pd.DataFrame(data, columns=["timestamp", "number"])
+            df.to_csv(output_csv, index=False)
+            last_save_time = time.time()
+            print(f"[{timestamp:.1f}s] Data saved")
+        time.sleep(captureinterval)
 
-    # Save CSV
-    df = pd.DataFrame(data, columns=["timestamp", "number"])
-    df.to_csv(output_csv, index=False)
-    print(f"Data saved to {os.path.abspath(output_csv)}")
+
+
 
 # --- Usage ---
 window_title = "LetsView [Cast]"
-bbox = (129, 266, 264, 342)  # window-relative coordinates
+bbox = (9, 379, 183, 449)  # window-relative coordinates
 
+
+
+
+
+
+
+
+#get_window_relative_bbox("LetsView [Cast]")
 # Log numbers every 1 second for 2 minutes (120s)
-log_numbers(window_title, bbox, interval=1, duration=120, output_csv="speed_data.csv")
+captureinterval = 5
+totaldistance =2
+log_numbers(window_title, bbox, captureinterval, totaldistance, output_csv="speed_data.csv")
 
 
 
