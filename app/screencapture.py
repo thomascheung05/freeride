@@ -9,17 +9,18 @@ import os
 
 
 
-def list_letsview_windows():
+def list_visible_windows():
     def enum_windows(hwnd, results):
-        title = win32gui.GetWindowText(hwnd)
-        if "LetsView" in title:
-            results.append((hwnd, title))
-    
+        if win32gui.IsWindowVisible(hwnd):
+            title = win32gui.GetWindowText(hwnd)
+            if title and "default" not in title.lower():  # skip empty or "default" titles
+                results.append((hwnd, title))
+
     windows = []
     win32gui.EnumWindows(enum_windows, windows)
-    
+
     if not windows:
-        print("No LetsView windows found.")
+        print("No visible windows found (excluding 'default').")
     else:
         for hwnd, title in windows:
             print(f"HWND: {hwnd}, Title: {title}")
@@ -32,8 +33,7 @@ def list_letsview_windows():
 
 
 
-
-def get_window_relative_bbox(window_title,save_screenshot_path="bbox_TESGING_capture.png"):
+def get_window_relative_bbox(window_title,save_screenshot_path):
     # Find the window
     hwnd = win32gui.FindWindow(None, window_title)
     if not hwnd:

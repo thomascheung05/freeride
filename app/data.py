@@ -1,7 +1,6 @@
 
 import pytesseract
 import time
-import win32gui
 import time
 import pandas as pd
 import numpy as np
