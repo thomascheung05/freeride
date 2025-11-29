@@ -1,3 +1,15 @@
+Now using tesseract for text recognizition of the bounding box info
+I noticed powertoys has something that seems like it could do this  
+    maybe that could be a better alternative - does it work on mac to?
+
+
+
+
+
+
+
+
+
 Started using light blue to connect to BLE devices
 
 This command made it so BLE devices are discoverable 
