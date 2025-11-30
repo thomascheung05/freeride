@@ -6,7 +6,8 @@ import win32gui
 import pyautogui
 import time
 import os
-
+import pytesseract
+import numpy as np
 
 
 def list_visible_windows():
@@ -24,10 +25,6 @@ def list_visible_windows():
     else:
         for hwnd, title in windows:
             print(f"HWND: {hwnd}, Title: {title}")
-
-
-
-
 
 
 
@@ -75,10 +72,6 @@ def get_window_relative_bbox(window_title,save_screenshot_path):
 
 
 
-
-
-
-
 def capture_window_region(title, bbox):
     hwnd = win32gui.FindWindow(None, title) # stores the window in this variable
     if not hwnd:
@@ -114,3 +107,42 @@ def capture_window_region(title, bbox):
     win32gui.ReleaseDC(hwnd, hwndDC)
 
     return cropped_img
+
+
+
+
+
+def extract_number_from_image(img):
+    tesseract_path = r"C:\Users\Thomas\Main\freeride\tesseract\tesseract.exe"
+    pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    text = pytesseract.image_to_string(img, config='--psm 7')  # single line
+    text = text.strip().replace(',', '')
+    try:
+        return float(text)
+    except ValueError:
+        return None
+    
+
+
+
+
+def read_distance_once(window_title, bbox, start_time, distance_units):
+    """
+    Captures window, extracts number, returns (timestamp, distance or NaN)
+    """
+    img = capture_window_region(window_title, bbox)
+    timestamp = time.time() - start_time
+
+    if img is None:
+        return timestamp, np.nan
+
+    distance = extract_number_from_image(img)
+    if distance is None:
+        return timestamp, np.nan
+    else:
+        if distance_units == 'km':
+            distance = distance * 1000
+        if distance_units == 'miles':
+            distance = distance * 1609
+
+    return timestamp, distance
