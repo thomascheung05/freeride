@@ -10,6 +10,9 @@ import pytesseract
 import numpy as np
 
 
+
+
+
 def list_visible_windows():
     def enum_windows(hwnd, results):
         if win32gui.IsWindowVisible(hwnd):

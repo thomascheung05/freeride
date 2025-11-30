@@ -19,6 +19,10 @@ screenshots_folder_path = app_folder_path.parent / 'testscreenshots'
 unprocessed_routes_folder_path = app_folder_path.parent / 'routes' / 'unprocessed'
 processed_routes_folder_path = app_folder_path.parent / 'routes' / 'processed'
 
+
+
+
+
 def load_in_gpx(route_name):
     gpx_path = unprocessed_routes_folder_path / f'{route_name}.gpx'
     tree = ET.parse(gpx_path)
