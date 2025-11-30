@@ -6,41 +6,72 @@ from data import (freeride_loop,
                  get_streetview_image_from_coord)
 from screencapture import (get_window_relative_bbox, 
                            list_visible_windows)
+from flask import Flask, render_template, request, jsonify, send_file, Response
 from pathlib import Path
-app_folder_path = Path(__file__).parent
-screenshots_folder_path = app_folder_path.parent / 'testscreenshots' 
-unprocessed_routes_folder_path = app_folder_path.parent / 'routes' / 'unprocessed'
-processed_routes_folder_path = app_folder_path.parent / 'routes' / 'processed'
+from io import BytesIO
+
+APP_FOLDER_PATH = Path(__file__).parent
+SCREENSHOTS_FOLDER_PATH = APP_FOLDER_PATH.parent / 'testscreenshots'
+UNPROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'unprocessed'
+PROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'processed'
+STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
+IMAGE_FOLDER_PATH = STATIC_FOLDER_PATH / 'streetviewimages'
 
 
 
 
-#action = "get a bounder box cooddinates"
-#action = "find casting window"
-# action = "record numbers"
-#action = "process data file"
-action = "get 1 streetview image"
+app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
+@app.route('/flask_main', methods=['GET'])
 
-if action == "get a bounder box cooddinates":
-    USER_WINDOW_NAME = "LetsView [Cast]"
-    get_window_relative_bbox(USER_WINDOW_NAME, screenshots_folder_path / "testingscreenshots.jpg")
-if action == "find casting window":
-    list_visible_windows()
-if action == "record numbers":
-    USER_WINDOW_NAME = "LetsView [Cast]"
-    bbox = (9, 379, 183, 449)  
-    capture_interval = 5
-    total_distance =2
-    output_csv = "distance_log.csv"
-    data = freeride_loop(USER_WINDOW_NAME, bbox, capture_interval, total_distance)
-    save_csv(data, output_csv)
-if action == "process data file":
-    route = process_gpx_route('testroute')
-if action == "get 1 streetview image":
-    route = load_in_processed_route('testroute')
-    DISTANCE_ALONGE_ROUTE = 200    
-    coord_row = get_cord_from_dist_along_route(route, DISTANCE_ALONGE_ROUTE)
-    get_streetview_image_from_coord(coord_row)
+def flask_main():
+    
+    action = request.args.get('action')
+
+    #action = "get_bounding_box_coordinates"
+    #action = "find_casting_window"
+    # action = "record_numbers"
+    #action = "process_data_file"
+    #action = "get_1_streetview_image"
+
+    if action == "get_bounding_box_coordinates":
+        USER_WINDOW_NAME = "LetsView [Cast]"
+        get_window_relative_bbox(USER_WINDOW_NAME, SCREENSHOTS_FOLDER_PATH / "testingscreenshots.jpg")
+        jsonify({"status": "success", "message": "Bounding box saved"})
+    if action == "find_casting_window":
+        list_visible_windows()
+    if action == "record_numbers":
+        USER_WINDOW_NAME = "LetsView [Cast]"
+        bbox = (9, 379, 183, 449)  
+        capture_interval = 5
+        total_distance =2
+        output_csv = "distance_log.csv"
+        data = freeride_loop(USER_WINDOW_NAME, bbox, capture_interval, total_distance)
+        save_csv(data, output_csv)
+    if action == "process_data_file":
+        process_gpx_route('testroute')
+    if action == "get_1_streetview_image":
+        route = load_in_processed_route('testroute')
+        DISTANCE_ALONGE_ROUTE = 200    
+        coord_row = get_cord_from_dist_along_route(route, DISTANCE_ALONGE_ROUTE)
+        img_io  = get_streetview_image_from_coord(coord_row)
+
+        return send_file(img_io, mimetype='image/png')
+    return jsonify({"status": "success", "message": "Process Succesful"})
+
+
+@app.route('/')
+def serve_html():
+    return app.send_static_file('web.html')
+
+if __name__ == '__main__':
+    app.run(debug=False)
+
+
+
+
+
+
+
 
 
 

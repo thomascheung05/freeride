@@ -15,16 +15,16 @@ import math
 from PIL import Image
 from io import BytesIO
 app_folder_path = Path(__file__).parent
-screenshots_folder_path = app_folder_path.parent / 'testscreenshots' 
-unprocessed_routes_folder_path = app_folder_path.parent / 'routes' / 'unprocessed'
-processed_routes_folder_path = app_folder_path.parent / 'routes' / 'processed'
+SCREENSHOTS_FOLDER_PATH = app_folder_path.parent / 'testscreenshots'
+UNPROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'unprocessed'
+PROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'processed'
 
 
 
 
 
 def load_in_gpx(route_name):
-    gpx_path = unprocessed_routes_folder_path / f'{route_name}.gpx'
+    gpx_path = UNPROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.gpx'
     tree = ET.parse(gpx_path)
     root = tree.getroot()
 
@@ -49,7 +49,7 @@ def load_in_gpx(route_name):
 
 
 def load_in_processed_route(route_name):
-    processed_file_path = processed_routes_folder_path / f'{route_name}.parquet'
+    processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
 
     gdf = gpd.read_parquet(processed_file_path)
     return gdf
@@ -131,7 +131,7 @@ def process_gpx_route(route_name):
     route = load_in_gpx(route_name)
     route = add_cumdist_to_route(route)
     route = add_heading_to_route(route)
-    processed_file_path = processed_routes_folder_path / f'{route_name}.parquet'
+    processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
     route.to_parquet(processed_file_path, engine='pyarrow', index=False)  
 
 
@@ -141,6 +141,7 @@ def process_gpx_route(route_name):
 def get_cord_from_dist_along_route(route, latest_distance):
     gdf = route
     idx = (gdf["distance_along_m"] - latest_distance).abs().idxmin()
+    print(f'Distnace:{latest_distance} | Coord:{gdf.iloc[idx]}')
     return gdf.iloc[idx]
 
 
@@ -166,7 +167,11 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
 
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
-    img.show()  # opens the image in your default viewer
+    # Convert image to bytes for sending directly
+    img_bytes = BytesIO()
+    img.save(img_bytes, format='PNG')
+    img_bytes.seek(0)
+    return img_bytes
 
 
 
