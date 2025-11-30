@@ -154,7 +154,9 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
     lon = row.geometry.x
     heading = row.get("heading", 0) 
 
-    GOOGLE_API_KEY = 'AIzaSyC8zAxvLoCPbQB5LERW0QNHRc_cLYd1OsI'
+    with open("googleapikey.txt", "r") as f:
+        GOOGLE_API_KEY = f.read().strip()
+
     url = (
         "https://maps.googleapis.com/maps/api/streetview"
         f"?size={size}"
