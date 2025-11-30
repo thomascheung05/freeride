@@ -40,7 +40,6 @@ def flask_main():
     if action == "find_casting_window":
         windows = list_visible_windows()
         return jsonify({"windows": windows})
-
     if action == "record_numbers":
         USER_WINDOW_NAME = "LetsView [Cast]"
         bbox = (9, 379, 183, 449)  

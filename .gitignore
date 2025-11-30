@@ -5,3 +5,4 @@ testscreenshots/
 routes/
 app/testroute_with_distance.csv
 app/__pycache__/
+app/googleapikey.txt
