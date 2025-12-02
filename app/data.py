@@ -14,14 +14,68 @@ import requests
 import math
 from PIL import Image
 from io import BytesIO
+import csv
+import os
 app_folder_path = Path(__file__).parent
 SCREENSHOTS_FOLDER_PATH = app_folder_path.parent / 'testscreenshots'
 UNPROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'unprocessed'
 PROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'processed'
+USER_SAVE_PATH = app_folder_path.parent / 'usersaves'
+
+
+
+########################################################
+# Save and Load Configurations 
+########################################################
+
+def save_config_preset(preset_name, distbbox, speedbbox, window_name):
+    PRESET_SAVE_PATH = USER_SAVE_PATH / f'{preset_name}.csv'
+
+    # If preset file already exists → error out
+    if os.path.exists(PRESET_SAVE_PATH):
+        raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")
+
+    # Create new file and write data
+    with open(PRESET_SAVE_PATH, mode='w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+
+        # Always write header (new file)
+        writer.writerow(["preset_name", "distbbox", "speedbbox", "window_name"])
+
+        # Write preset values
+        writer.writerow([preset_name, distbbox, speedbbox, window_name])
+
+    print(f"Preset '{preset_name}' created at {PRESET_SAVE_PATH}")
+    return PRESET_SAVE_PATH
+
+
+def load_config_preset(preset_name):
+    PRESET_SAVE_PATH = USER_SAVE_PATH / f'{preset_name}.csv'
+    with open(PRESET_SAVE_PATH, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            if row["preset_name"] == preset_name:
+                # Return the stored variables
+                return row["distbbox"], row["speedbbox"], row["window_name"]
+
+    raise ValueError(f"Preset '{preset_name}' not found in {PRESET_SAVE_PATH}")
 
 
 
 
+
+
+
+
+########################################################
+# Load in and Process Routes
+########################################################
+def load_in_processed_route(route_name):
+    processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
+
+    gdf = gpd.read_parquet(processed_file_path)
+    return gdf
 
 def load_in_gpx(route_name):
     gpx_path = UNPROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.gpx'
@@ -44,39 +98,6 @@ def load_in_gpx(route_name):
 
     return route
 
-
-
-
-
-def load_in_processed_route(route_name):
-    processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
-
-    gdf = gpd.read_parquet(processed_file_path)
-    return gdf
-
-
-
-
-
-def compute_heading(lat1, lon1, lat2, lon2):
-    """
-    Compute compass heading from point 1 to point 2 in degrees.
-    0 = North, 90 = East, 180 = South, 270 = West
-    """
-    dLon = math.radians(lon2 - lon1)
-    lat1 = math.radians(lat1)
-    lat2 = math.radians(lat2)
-
-    x = math.sin(dLon) * math.cos(lat2)
-    y = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(dLon)
-
-    heading = math.degrees(math.atan2(x, y))
-    return (heading + 360) % 360
-
-
-
-
-
 def add_heading_to_route(route):
     gdf = route
     lats = gdf.geometry.y.values
@@ -87,6 +108,20 @@ def add_heading_to_route(route):
     for i in range(len(gdf)):
         if i < len(gdf) - 1:
             # heading to next point
+            def compute_heading(lat1, lon1, lat2, lon2):
+                """
+                Compute compass heading from point 1 to point 2 in degrees.
+                0 = North, 90 = East, 180 = South, 270 = West
+                """
+                dLon = math.radians(lon2 - lon1)
+                lat1 = math.radians(lat1)
+                lat2 = math.radians(lat2)
+
+                x = math.sin(dLon) * math.cos(lat2)
+                y = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(dLon)
+
+                heading = math.degrees(math.atan2(x, y))
+                return (heading + 360) % 360
             h = compute_heading(lats[i], lons[i], lats[i+1], lons[i+1])
         else:
             # last point: repeat previous heading
@@ -95,10 +130,6 @@ def add_heading_to_route(route):
 
     gdf["heading"] = headings
     return gdf
-
-
-
-
 
 def add_cumdist_to_route(route):
     gdf = route
@@ -123,10 +154,6 @@ def add_cumdist_to_route(route):
 
     return gdf
 
-
-
-
-
 def process_gpx_route(route_name):
     route = load_in_gpx(route_name)
     route = add_cumdist_to_route(route)
@@ -136,6 +163,18 @@ def process_gpx_route(route_name):
 
 
 
+
+
+
+
+
+
+
+
+
+########################################################
+# FreeRide Runner Functions
+########################################################
 
 
 def get_cord_from_dist_along_route(route, latest_distance):

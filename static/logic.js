@@ -3,9 +3,47 @@ document.getElementById("getWindowsButton").addEventListener("click", fetchVisib
 document.getElementById("windowsmodalClose").addEventListener("click", () => {document.getElementById("getWindowsModal").classList.add("hidden");});
 document.getElementById("getbbox").addEventListener("click", getBbox);
 document.getElementById("bboxmodalClose").addEventListener("click", () => {document.getElementById("getBboxModal").classList.add("hidden");});
+document.getElementById("savePreset").addEventListener("click", savePreset);
+document.getElementById("processRoute").addEventListener("click", processRoute);
+
+
+async function processRoute(){
+    const userRouteToProcess = document.getElementById("userRouteToProcess").value;
+
+    const response = await fetch("/api/process_route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            route_to_process: userRouteToProcess}
+        )
+    });
+    const data = await response.json();
+    console.log(data);
+}
 
 
 
+
+
+async function savePreset(){
+    const userConfigPresetName = document.getElementById("userConfigPresetName").value;
+    const windowName = document.getElementById("userWindow").value;
+    const userDistBbox = document.getElementById("userDistBbox").value;
+    const userSpeedBbox = document.getElementById("userSpeedBbox").value;
+    const response = await fetch("/api/save_preset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            preset_name: userConfigPresetName,
+            distbbox: userDistBbox,
+            speedbbox: userSpeedBbox,
+            window_name: windowName
+        })
+    });
+
+    const data = await response.json();
+    console.log(data);
+}
 
 
 

@@ -3,7 +3,8 @@ from data import (freeride_loop,
                  load_in_processed_route, 
                  process_gpx_route, 
                  get_cord_from_dist_along_route, 
-                 get_streetview_image_from_coord)
+                 get_streetview_image_from_coord,
+                 save_config_preset)
 from screencapture import (get_window_relative_bbox, 
                            list_visible_windows)
 from flask import Flask, render_template, request, jsonify, send_file, Response
@@ -52,6 +53,52 @@ def get_bbox():
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
     
     return jsonify({"bbox": bbox, "screenshot": img_str})
+
+
+
+@app.route('/api/save_preset', methods=['POST'])
+def save_preset():
+    data = request.get_json()
+
+    preset_name = data.get("preset_name")
+    distbbox = data.get("distbbox")
+    speedbbox = data.get("speedbbox")
+    window_name = data.get("window_name")
+    try:
+        save_config_preset(preset_name, distbbox, speedbbox, window_name)
+
+        return jsonify({
+            "status": "success",
+            "message": f"Preset '{preset_name}' saved successfully."
+        }), 200
+
+    except FileExistsError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 409  # conflict error if preset exists
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Unexpected error: {str(e)}"
+        }), 500
+
+
+
+
+@app.route('/api/process_route', methods=['POST'])
+def process_route():
+    data = request.get_json()
+
+    route_name = data.get("route_to_process")
+    
+    process_gpx_route(route_name)
+    return jsonify({
+            "status": "success",
+            "message": f"Preset '{route_name}' saved successfully."
+        }), 200
+
 
 if __name__ == '__main__':
     app.run(debug=False)
