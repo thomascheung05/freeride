@@ -64,7 +64,7 @@ def get_window_relative_bbox(window_title):
 
     bbox = (rel_left, rel_top, rel_right, rel_bottom)
     print(f"Bounding box relative to window: {bbox}")
-    screenshot = capture_window_region(window_title, bbox)
+    screenshot = capture_window_region(window_title, bbox, speed_bbox= None)
 
     return bbox, screenshot
 
@@ -72,7 +72,7 @@ def get_window_relative_bbox(window_title):
 
 
 
-def capture_window_region(title, bbox):
+def capture_window_region(title, dist_bbox, speed_bbox):
     hwnd = win32gui.FindWindow(None, title) # stores the window in this variable
     if not hwnd:
         print("Window not found!")
@@ -98,15 +98,26 @@ def capture_window_region(title, bbox):
         (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
         bmpstr, 'raw', 'BGRX', 0, 1
     )
-    cropped_img = img.crop(bbox)    # crops the image to only the bounding box
+
     
-    # free up resources 
+    dist_cropped_img = img.crop(dist_bbox)    # crops the image to only the bounding box
+    if speed_bbox != None:
+        speed_cropped_img = img.crop(speed_bbox)
+        # free up resources 
+        win32gui.DeleteObject(bmp.GetHandle())
+        saveDC.DeleteDC()
+        mfcDC.DeleteDC()
+        win32gui.ReleaseDC(hwnd, hwndDC)
+
+        return dist_cropped_img, speed_cropped_img
+           
+
     win32gui.DeleteObject(bmp.GetHandle())
     saveDC.DeleteDC()
     mfcDC.DeleteDC()
     win32gui.ReleaseDC(hwnd, hwndDC)
 
-    return cropped_img
+    return dist_cropped_img
 
 
 
@@ -126,23 +137,25 @@ def extract_number_from_image(img):
 
 
 
-def read_distance_once(window_title, bbox, start_time, distance_units):
+def get_data_once(window_title, distbbox, speedbbox, distance_units):
     """
     Captures window, extracts number, returns (timestamp, distance or NaN)
     """
-    img = capture_window_region(window_title, bbox)
-    timestamp = time.time() - start_time
+    dist_img, speed_img = capture_window_region(window_title, distbbox, speedbbox)
 
-    if img is None:
-        return timestamp, np.nan
-
-    distance = extract_number_from_image(img)
+    distance = extract_number_from_image(dist_img)
     if distance is None:
-        return timestamp, np.nan
+        distance = np.nan
     else:
         if distance_units == 'km':
             distance = distance * 1000
         if distance_units == 'miles':
             distance = distance * 1609
 
-    return timestamp, distance
+    if speed_img != None:
+        speed = extract_number_from_image(speed_img)
+        if speed is None:
+            speed = np.nan
+        return distance, speed
+
+    return distance

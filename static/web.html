@@ -24,11 +24,16 @@
 
     <button id="menuButton">☰</button>
     <div id="sidePanel">
-        <h5>Configuration</h5>
+        
         <div class="swap-row">
-            <label for="swapButton">Swap UI   |   </label>
             <button id="swapButton">Swap Views</button>
         </div>
+        <h5>Configuration</h5>
+        <div class="swap-row">
+            <label for="configPreset">Config Preset   |   </label>
+            <input type="text" id="userConfigPresetName" placeholder="Preset Name">
+            <button id="savePreset">Save Preset</button>
+        </div>  
         <div class="swap-row">
             <label for="windows">Screen Cap   |   </label>
             <input type="text" id="userWindow" placeholder="Window Tittle">
@@ -41,24 +46,24 @@
             <button id="getbbox">Measure a bbox</button>
         </div>    
 
-        <div class="swap-row">
-            <label for="configPreset">Config Preset   |   </label>
-            <input type="text" id="userConfigPresetName" placeholder="Preset Name">
-            <button id="savePreset">Save Preset</button>
-            <button id="loadPreset">Load Preset</button>
-        </div>    
+        <h5>Runner</h5>
 
         <div class="swap-row">
-            <label for="routeSelect">Route Select   |   </label>
-            <input type="text" id="userRoute" placeholder="Your Processed Route">
-            <label for="routeProcessor">Process route:</label>
+            <label for="routeSelect">Process Route   |   </label>
             <input type="text" id="userRouteToProcess" placeholder="Your route to process">
             <button id="processRoute">Process Route</button>
         </div>  
         
-        
+        <div class="swap-row">
+            <label for="runRoute">Start Route   |   </label>
+            <input type="text" id="userPresetName" placeholder="Config Preset Name">
+            <input type="text" id="userRoute" placeholder="Your Processed Route">
+            <input type="text" id="startDist" placeholder="Start Distance">
+        </div>  
 
-
+        <div class="swap-row">
+            <button id="startRoute">START</button>
+        </div>  
     </div>
 
     <div id="mainContainer">

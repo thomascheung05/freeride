@@ -8,7 +8,6 @@ from shapely.geometry import Point
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from screencapture import read_distance_once
 import xml.etree.ElementTree as ET
 import requests
 import math
@@ -54,12 +53,21 @@ def load_config_preset(preset_name):
     with open(PRESET_SAVE_PATH, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
 
+        # Read the first (and only) row
         for row in reader:
-            if row["preset_name"] == preset_name:
-                # Return the stored variables
-                return row["distbbox"], row["speedbbox"], row["window_name"]
+            # Convert bbox strings "10,20,30,40" → tuple of ints
+            distbbox = tuple(map(int, row["distbbox"].strip("()").split(",")))
+            speedbbox = tuple(map(int, row["speedbbox"].strip("()").split(",")))
+            window_name = row["window_name"]
 
-    raise ValueError(f"Preset '{preset_name}' not found in {PRESET_SAVE_PATH}")
+            return {
+                "preset_name": preset_name,
+                "distbbox": distbbox,
+                "speedbbox": speedbbox,
+                "window_name": window_name
+            }
+
+    raise ValueError(f"Preset '{preset_name}' is empty.")
 
 
 
@@ -180,7 +188,7 @@ def process_gpx_route(route_name):
 def get_cord_from_dist_along_route(route, latest_distance):
     gdf = route
     idx = (gdf["distance_along_m"] - latest_distance).abs().idxmin()
-    print(f'Distnace:{latest_distance} | Coord:{gdf.iloc[idx]}')
+    print(f'Distance:{latest_distance} | Row:{gdf.iloc[idx]}')
     return gdf.iloc[idx]
 
 
@@ -223,26 +231,26 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
 
 
 
-def freeride_loop(window_title, bbox, capture_interval, total_distance):
+# def freeride_loop(window_title, bbox, capture_interval, total_distance):
 
-    print(f"Logging every {capture_interval}s until distance reaches {total_distance}...")
+#     print(f"Logging every {capture_interval}s until distance reaches {total_distance}...")
 
-    start_time = time.time()
-    data = []
-    latest_distance = 0
+#     start_time = time.time()
+#     data = []
+#     latest_distance = 0
 
-    while latest_distance < total_distance:
-        ts, latest_distance = read_distance_once(window_title, bbox, start_time, 'km')
+#     while latest_distance < total_distance:
+#         ts, latest_distance = read_distance_once(window_title, bbox, start_time, 'km')
 
-        if np.isnan(latest_distance):
-            print(f"[{ts:.1f}s] Number: NA")
-        else:
-            print(f"[{ts:.1f}s] Number: {latest_distance}")
+#         if np.isnan(latest_distance):
+#             print(f"[{ts:.1f}s] Number: NA")
+#         else:
+#             print(f"[{ts:.1f}s] Number: {latest_distance}")
 
-        data.append([ts, latest_distance])
-        time.sleep(capture_interval)
+#         data.append([ts, latest_distance])
+#         time.sleep(capture_interval)
 
-    return data
+#     return data
 
 
 

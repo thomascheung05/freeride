@@ -1,18 +1,20 @@
-from data import (freeride_loop, 
+from data import ( 
                  save_csv,
                  load_in_processed_route, 
                  process_gpx_route, 
                  get_cord_from_dist_along_route, 
                  get_streetview_image_from_coord,
-                 save_config_preset)
+                 save_config_preset,load_config_preset)
 from screencapture import (get_window_relative_bbox, 
-                           list_visible_windows)
+                           list_visible_windows,
+                           get_data_once)
 from flask import Flask, render_template, request, jsonify, send_file, Response
 from pathlib import Path
 from io import BytesIO
 import io
+import time
 import base64
-
+CURRENT_CONFIG = {}
 APP_FOLDER_PATH = Path(__file__).parent
 SCREENSHOTS_FOLDER_PATH = APP_FOLDER_PATH.parent / 'testscreenshots'
 UNPROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'unprocessed'
@@ -98,6 +100,53 @@ def process_route():
             "status": "success",
             "message": f"Preset '{route_name}' saved successfully."
         }), 200
+
+
+
+@app.route('/api/freeride_run', methods=['POST'])
+def freeride_run():
+    data = request.get_json()
+
+    preset_name = data["preset_name"]
+    route_name = data["route"]
+    start_dist = data["start_dist"]
+
+    
+    preset = load_config_preset(preset_name)
+
+    # Save everything to global memory
+    CURRENT_CONFIG["dist_bbox"] = preset["distbbox"]
+    CURRENT_CONFIG["speed_bbox"] = preset["speedbbox"]
+    CURRENT_CONFIG["window_name"] = preset["window_name"]
+    CURRENT_CONFIG["route_name"] = route_name
+    CURRENT_CONFIG["latest_distance"] = start_dist
+
+    return jsonify({"status": "ready"})
+    
+
+@app.route("/api/get_position", methods=["GET"])
+def get_position():
+    cfg = CURRENT_CONFIG
+    latest_distance, latest_speed = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
+    
+    route = load_in_processed_route(CURRENT_CONFIG["route_name"])
+    cord_row = get_cord_from_dist_along_route(route, latest_distance)
+    #lates_steet_img = get_streetview_image_from_coord(cord_row, fov=90, pitch=0, size="600x400")
+    if latest_speed is None:
+        latest_speed = 999
+
+    return jsonify({
+        "distance": latest_distance,
+        "speed": latest_speed,
+        "lat": float(cord_row.geometry.y),
+        "lon": float(cord_row.geometry.x)
+    })
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

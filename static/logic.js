@@ -5,6 +5,52 @@ document.getElementById("getbbox").addEventListener("click", getBbox);
 document.getElementById("bboxmodalClose").addEventListener("click", () => {document.getElementById("getBboxModal").classList.add("hidden");});
 document.getElementById("savePreset").addEventListener("click", savePreset);
 document.getElementById("processRoute").addEventListener("click", processRoute);
+document.getElementById("startRoute").addEventListener("click", freerideRun);
+
+
+
+
+async function freerideRun() {
+    const userPresetName = document.getElementById("userPresetName").value;
+    const userRoute = document.getElementById("userRoute").value;
+    const startDist = document.getElementById("startDist").value;
+
+    const response = await fetch("/api/freeride_run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            preset_name: userPresetName,
+            route: userRoute,
+            start_dist: startDist
+        })
+    });
+
+    const data = await response.json();
+    console.log("Route Loaded:", data);
+
+    // Start polling for position updates
+    pollPosition();
+    setInterval(pollPosition, 5000);
+}
+
+
+async function pollPosition() {
+    try {
+        const response = await fetch("/api/get_position");
+        const data = await response.json();
+        console.log("Position update:", data);
+
+        // update UI here...
+
+    } catch (err) {
+        console.error("Polling error:", err);
+    }
+}
+
+
+
+
+
 
 
 async function processRoute(){
