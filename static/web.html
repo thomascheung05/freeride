@@ -30,10 +30,16 @@
             <button id="swapButton">Swap Views</button>
         </div>
         <div class="swap-row">
-            <label for="windows">Window Screen Cap   |   </label>
-            <input type="text" id="userWindow" placeholder="Window Name">
-            <button id="getWindowsButotn">Show Windows</button>
-        </div>        
+            <label for="windows">Screen Cap   |   </label>
+            <input type="text" id="userWindow" placeholder="Window Tittle">
+            <button id="getWindowsButton">Show Windows</button>
+        </div>  
+        <div class="swap-row">
+            <label for="BBOX">BBOx   |   </label>
+            <input type="text" id="userDistBbox" placeholder="Distance bbox">
+            <input type="text" id="userSpeedBbox" placeholder="Speed bbox">
+            <button id="getbbox">Measure a bbox</button>
+        </div>      
     </div>
 
     <div id="mainContainer">
@@ -48,7 +54,23 @@
         <img id="smallImage" src="/static/sample.jpg" alt="Preview">
     </div>
 
+    <div id="getWindowsModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="windowsmodalClose" class="close">&times;</span>
+            <h5>Available Windows:</h5>
+            <p id="modalText"></p>
+        </div>
+    </div>
 
+
+
+    <div id="getBboxModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="bboxmodalClose" class="close">&times;</span>
+            <h5>BBOX Test Screenshot:</h5>
+            <p id="bboxModalText"></p>
+        </div>
+    </div>
 
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>    

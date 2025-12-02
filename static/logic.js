@@ -1,7 +1,79 @@
 document.addEventListener("DOMContentLoaded", initUI);
+document.getElementById("getWindowsButton").addEventListener("click", fetchVisibleWindows);
+document.getElementById("windowsmodalClose").addEventListener("click", () => {document.getElementById("getWindowsModal").classList.add("hidden");});
+document.getElementById("getbbox").addEventListener("click", getBbox);
+document.getElementById("bboxmodalClose").addEventListener("click", () => {document.getElementById("getBboxModal").classList.add("hidden");});
 
 
 
+
+
+
+
+async function getBbox(){
+    const windowName = document.getElementById("userWindow").value;
+
+    const response = await fetch("/api/get_bbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ window_name: windowName })
+    });
+
+    const data = await response.json();
+    console.log(data);
+    showbboxModal(data.screenshot); // pass the base64 string
+
+    function showbboxModal(imageBase64) {  // use the correct parameter
+        const bboxmodal = document.getElementById("getBboxModal");
+        const bboxModalText = document.getElementById("bboxModalText");
+
+        // Insert the image
+        bboxModalText.innerHTML = `<img src="data:image/png;base64,${imageBase64}" style="max-width:100%; max-height:80vh;">`;
+        bboxmodal.classList.remove("hidden");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function fetchVisibleWindows() {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Function to run function and display all the windows to know what window has our data
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    try {
+        const response = await fetch("/api/get_window");
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        console.log("Visible windows:", data.formatted_windows);
+
+        // Do something with the data, e.g., update the UI
+        showWindowsModal(data.formatted_windows)
+        function showWindowsModal(message) {
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // Open a modal with a message
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            const modal = document.getElementById("getWindowsModal");
+            const modalText = document.getElementById("modalText");
+            modalText.innerHTML = message.replace(/\n/g, "<br>");
+            modal.classList.remove("hidden");
+        }
+    } catch (err) {
+        console.error("Error fetching windows:", err);
+    }
+}
 
 
 
@@ -70,6 +142,12 @@ function initUI() {
     }
     return map;
 }
+
+
+
+
+
+
 
 
 

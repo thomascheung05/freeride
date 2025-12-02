@@ -34,12 +34,12 @@ def list_visible_windows():
 
 
 
-def get_window_relative_bbox(window_title,save_screenshot_path):
+def get_window_relative_bbox(window_title):
     # Find the window
     hwnd = win32gui.FindWindow(None, window_title)
     if not hwnd:
         print("Window not found!")
-        return None
+        return 
 
     # Get client area top-left in screen coordinates
     client_left, client_top = win32gui.ClientToScreen(hwnd, (0, 0))
@@ -65,12 +65,8 @@ def get_window_relative_bbox(window_title,save_screenshot_path):
     bbox = (rel_left, rel_top, rel_right, rel_bottom)
     print(f"Bounding box relative to window: {bbox}")
     screenshot = capture_window_region(window_title, bbox)
-    if screenshot:
-        screenshot.save(save_screenshot_path)
-        print(f"Screenshot of bbox saved to {os.path.abspath(save_screenshot_path)}")
-    else:
-        print("Failed to capture screenshot of bbox.")
-    return bbox
+
+    return bbox, screenshot
 
 
 

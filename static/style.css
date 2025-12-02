@@ -3,22 +3,17 @@
     height: 100vh;
     position: relative;
 }
-
-/* Fullscreen map */
 #map {
+    /* Fullscreen map */
     width: 100%;
     height: 100%;
     display: none;
 }
-
 #sideImage {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-
-
-
 #smallWindow {
     position: absolute;
     bottom: 20px;
@@ -32,16 +27,13 @@
     z-index: 1000;
     display: flex;
 }
-
-
-/* Small version of map */
 #smallMap {
+    /* Fullscreen map */
     width: 100%;
     height: 100%;
 }
-
-/* Small image */
 #smallImage {
+    /* Fullscreen map */
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -59,11 +51,11 @@
 
 
 .leaflet-control-zoom {
+    /* get ride of default zoom buttons */
     display: none !important;
 }
-
-/* Hamburger button */
 #menuButton {
+    /* Hamburger button */
     position: absolute;
     top: 15px;
     left: 15px;
@@ -77,9 +69,8 @@
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
-
-/* Sliding panel */
 #sidePanel {
+    /* Sliding panel */
     position: absolute;
     top: 70px;
     left: 15px;
@@ -96,4 +87,84 @@
     display: flex;
     align-items: center; /* vertically center the label and button */
     gap: 8px; /* optional spacing between them */
+}
+
+
+
+
+
+
+
+#getWindowsModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    /* Remove flex centering */
+    display: block; 
+}
+#getWindowsModal .modal-content {
+    position: absolute;        /* inside the fixed overlay */
+    top: 250px;                  /* vertically centered */
+    right: 250px;               /* distance from the right edge */
+    transform: translateY(-50%); /* actually centers vertically */
+    background-color: rgba(29, 28, 28, 0.875);
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 250px;
+    max-width: 700px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    color: rgba(255, 255, 255, 0.988);
+}
+#getWindowsModal .close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+    cursor: pointer;
+}
+#getWindowsModal.hidden {
+    display: none;  /* Hide by default */
+}
+
+
+
+
+
+#getBboxModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    /* Remove flex centering */
+    display: block; 
+}
+#getBboxModal .modal-content {
+    position: absolute;        /* inside the fixed overlay */
+    top: 250px;                  /* vertically centered */
+    right: 250px;               /* distance from the right edge */
+    transform: translateY(-50%); /* actually centers vertically */
+    background-color: rgba(123, 111, 17, 0.875);
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 250px;
+    max-width: 700px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    color: rgba(255, 255, 255, 0.988);
+}
+#getBboxModal .close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+    cursor: pointer;
+}
+#getBboxModal.hidden {
+    display: none;  /* Hide by default */
 }
