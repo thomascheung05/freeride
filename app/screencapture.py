@@ -28,6 +28,7 @@ def list_visible_windows():
     else:
         for hwnd, title in windows:
             print(f"HWND: {hwnd}, Title: {title}")
+    return windows
 
 
 

@@ -38,7 +38,8 @@ def flask_main():
         get_window_relative_bbox(USER_WINDOW_NAME, SCREENSHOTS_FOLDER_PATH / "testingscreenshots.jpg")
         jsonify({"status": "success", "message": "Bounding box saved"})
     if action == "find_casting_window":
-        list_visible_windows()
+        windows = list_visible_windows()
+        return jsonify({"windows": windows})
     if action == "record_numbers":
         USER_WINDOW_NAME = "LetsView [Cast]"
         bbox = (9, 379, 183, 449)  
