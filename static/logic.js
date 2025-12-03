@@ -1,3 +1,9 @@
+// Global vars
+let map;
+let smallMap;
+let smallrouteLayer;
+let routeLayer;
+
 document.addEventListener("DOMContentLoaded", initUI);
 document.getElementById("getWindowsButton").addEventListener("click", fetchVisibleWindows);
 document.getElementById("windowsmodalClose").addEventListener("click", () => {document.getElementById("getWindowsModal").classList.add("hidden");});
@@ -26,11 +32,52 @@ async function freerideRun() {
     });
 
     const data = await response.json();
-    console.log("Route Loaded:", data);
 
-    // Start polling for position updates
-    pollPosition();
-    setInterval(pollPosition, 5000);
+    // Remove previous layers if they exist
+    if (routeLayer) {
+        map.removeLayer(routeLayer);
+    }
+    if (smallrouteLayer) {
+        smallMap.removeLayer(smallrouteLayer);
+    }
+
+    // Add route to main map
+    routeLayer = L.geoJSON(data.route, {
+        style: {
+            color: 'orange', // set color to orange
+            weight: 3
+        }
+    }).addTo(map);
+
+    // Snap main map to the first point of the route
+    const firstCoord = data.route.features[0].geometry.coordinates[0]; // [lng, lat]
+    map.setView([firstCoord[1], firstCoord[0]], 15); // 15 is zoom level
+
+    // Add route to small map
+    smallrouteLayer = L.geoJSON(data.route, {
+        style: {
+            color: 'orange', // set color to orange
+            weight: 3
+        }
+    }).addTo(smallMap);
+
+    // Snap small map to the first point of the route
+    smallMap.setView([firstCoord[1], firstCoord[0]], 15);
+
+    // Create a bicycle icon
+    const bikeIcon = L.icon({
+        iconUrl: '/static/img/bike.jpg', // replace with your bicycle image path
+        iconSize: [32, 32], // adjust size as needed
+        iconAnchor: [16, 16] // anchor so it points at the coordinate
+    });
+
+    // Place the bicycle marker at the first point
+    let bikeMarker = L.marker([firstCoord[1], firstCoord[0]], { icon: bikeIcon }).addTo(smallMap);
+
+
+    // // Start polling for position updates
+    // pollPosition();
+    // setInterval(pollPosition, 5000);
 }
 
 
@@ -48,11 +95,6 @@ async function pollPosition() {
 }
 
 
-
-
-
-
-
 async function processRoute(){
     const userRouteToProcess = document.getElementById("userRouteToProcess").value;
 
@@ -66,9 +108,6 @@ async function processRoute(){
     const data = await response.json();
     console.log(data);
 }
-
-
-
 
 
 async function savePreset(){
@@ -90,8 +129,6 @@ async function savePreset(){
     const data = await response.json();
     console.log(data);
 }
-
-
 
 
 async function getBbox(){
@@ -116,18 +153,6 @@ async function getBbox(){
         bboxmodal.classList.remove("hidden");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 async function fetchVisibleWindows() {
@@ -160,18 +185,17 @@ async function fetchVisibleWindows() {
 }
 
 
-
 function initUI() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the big and small map (one is always hidden)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Fullscreen map
-    const map = L.map('map', { zoomControl: false }).setView([45.5017, -73.5673], 12);
+    map = L.map('map', { zoomControl: false }).setView([45.5017, -73.5673], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
     // Small map
-    const smallMap = L.map('smallMap', { zoomControl: false }).setView([45.5017, -73.5673], 12);
+    smallMap = L.map('smallMap', { zoomControl: false }).setView([45.5017, -73.5673], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(smallMap);

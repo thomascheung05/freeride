@@ -1,14 +1,14 @@
 from data import ( 
                  save_csv,
                  load_in_processed_route, 
-                 process_gpx_route, 
+                 process_gpx_route, convert_gdf_to_lines,
                  get_cord_from_dist_along_route, 
                  get_streetview_image_from_coord,
                  save_config_preset,load_config_preset)
 from screencapture import (get_window_relative_bbox, 
                            list_visible_windows,
                            get_data_once)
-from flask import Flask, render_template, request, jsonify, send_file, Response
+from flask import Flask, json, render_template, request, jsonify, send_file, Response
 from pathlib import Path
 from io import BytesIO
 import io
@@ -120,8 +120,15 @@ def freeride_run():
     CURRENT_CONFIG["window_name"] = preset["window_name"]
     CURRENT_CONFIG["route_name"] = route_name
     CURRENT_CONFIG["latest_distance"] = start_dist
+    route = load_in_processed_route(route_name)
+    CURRENT_CONFIG["route"] = route
+    route_line = convert_gdf_to_lines(route)
+    route_line_geojson = json.loads(route_line.to_json())
 
-    return jsonify({"status": "ready"})
+    return jsonify({
+        "status": "ready",
+        "route": route_line_geojson   # <-- RETURN A REAL DICT, NOT A STRING
+    })
     
 
 @app.route("/api/get_position", methods=["GET"])
@@ -129,7 +136,7 @@ def get_position():
     cfg = CURRENT_CONFIG
     latest_distance, latest_speed = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
     
-    route = load_in_processed_route(CURRENT_CONFIG["route_name"])
+    route = cfg["route"]
     cord_row = get_cord_from_dist_along_route(route, latest_distance)
     #lates_steet_img = get_streetview_image_from_coord(cord_row, fov=90, pitch=0, size="600x400")
     if latest_speed is None:

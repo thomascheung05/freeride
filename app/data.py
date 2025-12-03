@@ -15,6 +15,8 @@ from PIL import Image
 from io import BytesIO
 import csv
 import os
+from shapely.geometry import LineString
+
 app_folder_path = Path(__file__).parent
 SCREENSHOTS_FOLDER_PATH = app_folder_path.parent / 'testscreenshots'
 UNPROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'unprocessed'
@@ -81,9 +83,18 @@ def load_config_preset(preset_name):
 ########################################################
 def load_in_processed_route(route_name):
     processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
-
     gdf = gpd.read_parquet(processed_file_path)
     return gdf
+def convert_gdf_to_lines(gdf):
+    line = LineString(gdf.geometry.tolist())
+
+    # Make a new GeoDataFrame with just the LineString
+    route_line_gdf = gpd.GeoDataFrame(
+        {"geometry": [line]},
+        crs=gdf.crs
+    )
+    return route_line_gdf
+
 
 def load_in_gpx(route_name):
     gpx_path = UNPROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.gpx'
