@@ -17,11 +17,11 @@ import csv
 import os
 from shapely.geometry import LineString
 
-app_folder_path = Path(__file__).parent
-SCREENSHOTS_FOLDER_PATH = app_folder_path.parent / 'testscreenshots'
-UNPROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'unprocessed'
-PROCESSED_ROUTES_FOLDER_PATH = app_folder_path.parent / 'routes' / 'processed'
-USER_SAVE_PATH = app_folder_path.parent / 'usersaves'
+APP_FOLDER_PATH = Path(__file__).parent
+SCREENSHOTS_FOLDER_PATH = APP_FOLDER_PATH.parent / 'testscreenshots'
+UNPROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'unprocessed'
+PROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'processed'
+USER_SAVE_PATH = APP_FOLDER_PATH.parent / 'usersaves'
 
 
 

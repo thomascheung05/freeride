@@ -1,3 +1,4 @@
+import csv
 from data import ( 
                  save_csv,
                  load_in_processed_route, 
@@ -17,13 +18,9 @@ import base64
 CURRENT_CONFIG = {}
 LAST_COORD = None
 APP_FOLDER_PATH = Path(__file__).parent
-SCREENSHOTS_FOLDER_PATH = APP_FOLDER_PATH.parent / 'testscreenshots'
-UNPROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'unprocessed'
 PROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'processed'
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
-IMAGE_FOLDER_PATH = STATIC_FOLDER_PATH / 'streetviewimages'
-
-
+USER_SAVE_PATH = APP_FOLDER_PATH.parent / 'usersaves'
 
 
 
@@ -156,7 +153,7 @@ def get_position():
         prev_lat, prev_lon = LAST_COORD
         d = distance_m(prev_lat, prev_lon, lat, lon)
 
-        if d > 10:                 # moved more than 10 m
+        if d > 50:                 # moved more than 50 m
             should_pull_image = True
             LAST_COORD = (lat, lon)  # update global stored coordinate
         else:
@@ -178,7 +175,7 @@ def get_position():
 
     latest_steet_img = None
     if should_pull_image:
-        print("------->Pulling new StreetView image (moved >10 m)")
+        print("------->Pulling new StreetView image (moved >50 m)")
         
         def encode_image_to_base64(image_io):
             import base64
@@ -204,7 +201,39 @@ def get_position():
 
 
 
+@app.route('/api/freeride_stop', methods=['POST'])
+def freeride_stop():
+    global CURRENT_CONFIG, LAST_COORD
+    if CURRENT_CONFIG:
+        # Pick variables you want to save
+        ride_data = {
+            "route_name": CURRENT_CONFIG.get("route_name", ""),
+            "latest_distance": CURRENT_CONFIG.get("latest_distance", 0),
+            "dist_bbox": CURRENT_CONFIG.get("dist_bbox", ""),
+            "speed_bbox": CURRENT_CONFIG.get("speed_bbox", ""),
+            "window_name": CURRENT_CONFIG.get("window_name", ""),
+            "timestamp": time.time()  # optional: record when the ride stopped
+        }
 
+        # Make sure file exists; write header if new
+        SAVE_FILE = USER_SAVE_PATH / 'SAVED_RIDES.csv'
+        file_exists = SAVE_FILE.exists()
+        with open(SAVE_FILE, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=ride_data.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(ride_data)
+
+
+    # Clear global state
+    CURRENT_CONFIG = {}
+    LAST_COORD = None
+
+    print("="*10)
+    print("FREERIDE STOPPED: global variables cleared")
+    print("="*10)
+
+    return jsonify({"status": "success", "message": "Freeride stopped, globals cleared."})
 
 
 

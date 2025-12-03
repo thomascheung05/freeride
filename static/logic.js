@@ -5,7 +5,7 @@ let smallrouteLayer;
 let routeLayer;
 let smallbikeMarker = null;
 let bigbikeMarker = null;
-
+let freerideInterval = null;
 document.addEventListener("DOMContentLoaded", initUI);
 document.getElementById("getWindowsButton").addEventListener("click", fetchVisibleWindows);
 document.getElementById("windowsmodalClose").addEventListener("click", () => {document.getElementById("getWindowsModal").classList.add("hidden");});
@@ -14,9 +14,35 @@ document.getElementById("bboxmodalClose").addEventListener("click", () => {docum
 document.getElementById("savePreset").addEventListener("click", savePreset);
 document.getElementById("processRoute").addEventListener("click", processRoute);
 document.getElementById("startRoute").addEventListener("click", freerideRun);
+document.getElementById("stopRoute").addEventListener("click", async () => {
+    try {
+        // Stop polling on the client side
+        if (freerideInterval) {
+            clearInterval(freerideInterval);
+            freerideInterval = null;
+            console.log("Freeride runner stopped (client).");
+        }
+        const defaultImgSrc = "/static/img/duck.jpg"; // replace with your default image
+        const imageElems = ["image", "smallimage"];
+        imageElems.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.src = defaultImgSrc;
+        });
+
+        // Optionally reset the map marker
+        if (smallbikeMarker) smallbikeMarker.remove();
+        if (bigbikeMarker) bigbikeMarker.remove();
+        // Tell the backend to clear globals
+        const response = await fetch("/api/freeride_stop", { method: "POST" });
+        const data = await response.json();
+        console.log("Server response:", data.message);
 
 
 
+    } catch (err) {
+        console.error("Error stopping freeride:", err);
+    }
+});
 
 async function freerideRun() {
     const userPresetName = document.getElementById("userPresetName").value;
@@ -79,8 +105,10 @@ async function freerideRun() {
 
 
     // Start polling for position updates
-    pollPosition();
-    setInterval(pollPosition, 10000);
+    
+
+    pollPosition(); // first immediate call
+    freerideInterval = setInterval(pollPosition, 10000); // store interval ID
 }
 
 
@@ -98,7 +126,6 @@ async function pollPosition() {
             document.getElementById("smallimage").src =
                 "data:image/png;base64," + data.image;
         }
-
         if (smallbikeMarker && data.lat && data.lon) {
             smallbikeMarker.setLatLng([data.lat, data.lon]);
         }
