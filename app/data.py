@@ -199,7 +199,7 @@ def process_gpx_route(route_name):
 def get_cord_from_dist_along_route(route, latest_distance):
     gdf = route
     idx = (gdf["distance_along_m"] - latest_distance).abs().idxmin()
-    print(f'Distance:{latest_distance} | Row:{gdf.iloc[idx]}')
+
     return gdf.iloc[idx]
 
 
@@ -252,27 +252,6 @@ def distance_m(lat1, lon1, lat2, lon2):
 
 
 
-
-# def freeride_loop(window_title, bbox, capture_interval, total_distance):
-
-#     print(f"Logging every {capture_interval}s until distance reaches {total_distance}...")
-
-#     start_time = time.time()
-#     data = []
-#     latest_distance = 0
-
-#     while latest_distance < total_distance:
-#         ts, latest_distance = read_distance_once(window_title, bbox, start_time, 'km')
-
-#         if np.isnan(latest_distance):
-#             print(f"[{ts:.1f}s] Number: NA")
-#         else:
-#             print(f"[{ts:.1f}s] Number: {latest_distance}")
-
-#         data.append([ts, latest_distance])
-#         time.sleep(capture_interval)
-
-#     return data
 
 
 
@@ -397,34 +376,3 @@ def save_csv(data, output_csv):
 
 
 
-
-
-# Graveyard
-# # --- Real-time logger ---
-# def log_numbers(window_title, bbox, captureinterval, totaldistance, output_csv):
-#     """
-#     Capture the window region every `interval` seconds for `duration` seconds
-#     and save timestamp + number to CSV.
-#     """
-#     data = []
-#     start_time = time.time()
-
-
-#     print(f"Logging numbers from '{window_title}' every {captureinterval}s for {totaldistance}km...")
-#     distance = 0
-#     while distance < totaldistance:
-#         img = capture_window_region(window_title, bbox)
-#         if img:
-#             distance = extract_number_from_image(img)
-#             timestamp = time.time() - start_time
-#             if distance is not None:
-#                 print(f"[{timestamp:.1f}s] Number: {distance}")
-#                 data.append([timestamp, distance])
-#             else:
-#                 print(f"[{timestamp:.1f}s] Number: NA")
-#                 data.append([timestamp, np.nan])
-#         time.sleep(captureinterval)
-
-#     df = pd.DataFrame(data, columns=["timestamp", "distance"])
-#     df.to_csv(output_csv, index=False)
-#     print(f"[{timestamp:.1f}s] Data saved")

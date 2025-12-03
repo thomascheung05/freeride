@@ -141,10 +141,9 @@ def get_position():
     cord_row = get_cord_from_dist_along_route(route, latest_distance)
     lat = float(cord_row.geometry.y)
     lon = float(cord_row.geometry.x)
-
     if latest_speed is None:
         latest_speed = 999
-
+ 
 
     should_pull_image = False
     global LAST_COORD
@@ -163,16 +162,25 @@ def get_position():
         else:
             should_pull_image = False
 
+    print("="*90)
+    print("NEW POSITION RECORDED")
+    print("="*90)
+    print()
+    print(f"{'Recorded Distance:':<20} {latest_distance:.3f}")
+    print(f"{'Recorded Speed:':<20} {latest_speed:.3f}")
+    print(f"{'Latitude:':<20} {cord_row.geometry.y:.6f}")
+    print(f"{'Longitude:':<20} {cord_row.geometry.x:.6f}")
+    print(f"{'Distance along route:':<20} {cord_row.distance_along_m:.3f}")
+    print(f"{'Heading:':<20} {cord_row.heading:.3f}")
+    print()
+
+
 
     latest_steet_img = None
     if should_pull_image:
-        print("Pulling new StreetView image (moved >10 m)")
+        print("------->Pulling new StreetView image (moved >10 m)")
         
         def encode_image_to_base64(image_io):
-            """
-            Accepts either a BytesIO object or a file path string.
-            Returns base64-encoded string.
-            """
             import base64
             if isinstance(image_io, BytesIO):
                 return base64.b64encode(image_io.getvalue()).decode("utf-8")
@@ -183,9 +191,9 @@ def get_position():
         latest_steet_img = get_streetview_image_from_coord(cord_row, fov=90, pitch=0, size="600x400")
         latest_steet_img_b64 = encode_image_to_base64(latest_steet_img)
     else:
-        print("Skipping image (not moved enough)")
+        print("------->Skipping image (not moved enough)")
         latest_steet_img_b64 = None  # now it's safely defined
-
+    print("="*90)    
     return jsonify({
         "distance": latest_distance,
         "speed": latest_speed,
