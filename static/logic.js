@@ -3,6 +3,8 @@ let map;
 let smallMap;
 let smallrouteLayer;
 let routeLayer;
+let smallbikeMarker = null;
+let bigbikeMarker = null;
 
 document.addEventListener("DOMContentLoaded", initUI);
 document.getElementById("getWindowsButton").addEventListener("click", fetchVisibleWindows);
@@ -72,12 +74,13 @@ async function freerideRun() {
     });
 
     // Place the bicycle marker at the first point
-    let bikeMarker = L.marker([firstCoord[1], firstCoord[0]], { icon: bikeIcon }).addTo(smallMap);
+    smallbikeMarker = L.marker([firstCoord[1], firstCoord[0]], { icon: bikeIcon }).addTo(smallMap);
+    bigbikeMarker = L.marker([firstCoord[1], firstCoord[0]], { icon: bikeIcon }).addTo(smallMap);
 
 
-    // // Start polling for position updates
-    // pollPosition();
-    // setInterval(pollPosition, 5000);
+    // Start polling for position updates
+    pollPosition();
+    setInterval(pollPosition, 10000);
 }
 
 
@@ -87,7 +90,21 @@ async function pollPosition() {
         const data = await response.json();
         console.log("Position update:", data);
 
-        // update UI here...
+        if (data.image) {
+            document.getElementById("image").src =
+                "data:image/png;base64," + data.image;
+        }
+        if (data.image) {
+            document.getElementById("smallimage").src =
+                "data:image/png;base64," + data.image;
+        }
+
+        if (smallbikeMarker && data.lat && data.lon) {
+            smallbikeMarker.setLatLng([data.lat, data.lon]);
+        }
+        if (bigbikeMarker && data.lat && data.lon) {
+            bigbikeMarker.setLatLng([data.lat, data.lon]);
+        }
 
     } catch (err) {
         console.error("Polling error:", err);
@@ -203,7 +220,7 @@ function initUI() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Switch wether image or map is full screen / in mini viewer
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    const mainImage = document.getElementById("sideImage");
+    const mainImage = document.getElementById("image");
     const smallImage = document.getElementById("smallImage");
     const swapButton = document.getElementById("swapButton");
     swapmapimage(mainImage,smallImage,swapButton);

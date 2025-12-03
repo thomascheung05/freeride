@@ -214,6 +214,7 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
 
     with open("googleapikey.txt", "r") as f:
         GOOGLE_API_KEY = f.read().strip()
+
     url = (
         "https://maps.googleapis.com/maps/api/streetview"
         f"?size={size}"
@@ -236,6 +237,16 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
 
 
 
+
+def distance_m(lat1, lon1, lat2, lon2):
+    R = 6371000  # meters
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 
 

@@ -3,7 +3,7 @@ from data import (
                  load_in_processed_route, 
                  process_gpx_route, convert_gdf_to_lines,
                  get_cord_from_dist_along_route, 
-                 get_streetview_image_from_coord,
+                 get_streetview_image_from_coord,distance_m,
                  save_config_preset,load_config_preset)
 from screencapture import (get_window_relative_bbox, 
                            list_visible_windows,
@@ -15,6 +15,7 @@ import io
 import time
 import base64
 CURRENT_CONFIG = {}
+LAST_COORD = None
 APP_FOLDER_PATH = Path(__file__).parent
 SCREENSHOTS_FOLDER_PATH = APP_FOLDER_PATH.parent / 'testscreenshots'
 UNPROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'unprocessed'
@@ -127,7 +128,7 @@ def freeride_run():
 
     return jsonify({
         "status": "ready",
-        "route": route_line_geojson   # <-- RETURN A REAL DICT, NOT A STRING
+        "route": route_line_geojson 
     })
     
 
@@ -135,16 +136,60 @@ def freeride_run():
 def get_position():
     cfg = CURRENT_CONFIG
     latest_distance, latest_speed = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
-    
+
     route = cfg["route"]
     cord_row = get_cord_from_dist_along_route(route, latest_distance)
-    #lates_steet_img = get_streetview_image_from_coord(cord_row, fov=90, pitch=0, size="600x400")
+    lat = float(cord_row.geometry.y)
+    lon = float(cord_row.geometry.x)
+
     if latest_speed is None:
         latest_speed = 999
+
+
+    should_pull_image = False
+    global LAST_COORD
+    if LAST_COORD is None:
+        # First time ever → pull an image
+        should_pull_image = True
+        LAST_COORD = (lat, lon)
+
+    else:
+        prev_lat, prev_lon = LAST_COORD
+        d = distance_m(prev_lat, prev_lon, lat, lon)
+
+        if d > 10:                 # moved more than 10 m
+            should_pull_image = True
+            LAST_COORD = (lat, lon)  # update global stored coordinate
+        else:
+            should_pull_image = False
+
+
+    latest_steet_img = None
+    if should_pull_image:
+        print("Pulling new StreetView image (moved >10 m)")
+        
+        def encode_image_to_base64(image_io):
+            """
+            Accepts either a BytesIO object or a file path string.
+            Returns base64-encoded string.
+            """
+            import base64
+            if isinstance(image_io, BytesIO):
+                return base64.b64encode(image_io.getvalue()).decode("utf-8")
+            else:
+                with open(image_io, "rb") as f:
+                    return base64.b64encode(f.read()).decode("utf-8")
+        
+        latest_steet_img = get_streetview_image_from_coord(cord_row, fov=90, pitch=0, size="600x400")
+        latest_steet_img_b64 = encode_image_to_base64(latest_steet_img)
+    else:
+        print("Skipping image (not moved enough)")
+        latest_steet_img_b64 = None  # now it's safely defined
 
     return jsonify({
         "distance": latest_distance,
         "speed": latest_speed,
+        "image": latest_steet_img_b64,
         "lat": float(cord_row.geometry.y),
         "lon": float(cord_row.geometry.x)
     })
