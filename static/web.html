@@ -50,16 +50,27 @@
 
         <div class="swap-row">
             <label for="routeSelect">Process Route   |   </label>
-            <input type="text" id="userRouteToProcess" placeholder="Your route to process">
+            <select id="userRouteToProcess">
+                <option value="" disabled selected>Unprocessed Route</option>
+            </select>
             <button id="processRoute">Process Route</button>
         </div>  
         
         <div class="swap-row">
             <label for="runRoute">Start Route   |   </label>
-            <input type="text" id="userPresetName" placeholder="Config Preset Name">
-            <input type="text" id="userRoute" placeholder="Your Processed Route">
+
+            <!-- Dropdown for config presets -->
+            <select id="userPresetName">
+                <option value="" disabled selected>Config</option>
+            </select>
+
+            <!-- Dropdown for unprocessed route files -->
+            <select id="userRoute">
+                <option value="" disabled selected>Route</option>
+            </select>
+
             <input type="text" id="startDist" placeholder="Start Distance">
-        </div>  
+        </div>
 
         <div class="swap-row">
             <button id="startRoute">START</button>
@@ -76,7 +87,7 @@
 
     <div id="smallWindow">
         <div id="smallMap"></div>
-        <img id="smallImage" src="/static/duck.jpg" alt="Preview">
+        <img id="smallImage" src="/static/img/duck.jpg" alt="Preview">
     </div>
 
     <div id="getWindowsModal" class="modal hidden">

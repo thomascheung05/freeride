@@ -200,6 +200,7 @@ async function getBbox(){
 
 
 async function fetchVisibleWindows() {
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Function to run function and display all the windows to know what window has our data
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +230,42 @@ async function fetchVisibleWindows() {
 }
 
 
-function initUI() {
+async function initUI() {
+    
+    const response = await fetch("/api/init_ui");
+    if (!response.ok) {
+        throw new Error("Network response was not ok");
+    }
+    const data = await response.json();
+
+    // NEW: populate dropdowns
+    fillDropDown("userPresetName", data.config_presets);
+    fillDropDown("userRouteToProcess", data.unprocessed_files);
+    fillDropDown("userRoute", data.processed_files);
+
+    function fillDropDown(id, items) {
+        const select = document.getElementById(id);
+        select.innerHTML = ""; // clear existing options
+
+        // Add placeholder first
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.disabled = true;
+        placeholder.selected = true;  // Important! Keeps it selected
+        placeholder.textContent = id === "userRoute" ? "Route" : "Config Preset";
+        select.appendChild(placeholder);
+
+        // Add folder items
+        items.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item;
+            opt.textContent = item;
+            select.appendChild(opt);
+        });
+    }
+
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Initializes the big and small map (one is always hidden)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -18,10 +18,12 @@ import os
 from shapely.geometry import LineString
 
 APP_FOLDER_PATH = Path(__file__).parent
-SCREENSHOTS_FOLDER_PATH = APP_FOLDER_PATH.parent / 'testscreenshots'
-UNPROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'unprocessed'
-PROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'processed'
-USER_SAVE_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
+USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
+USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
+USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
+USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
 
 
 
@@ -30,7 +32,7 @@ USER_SAVE_PATH = APP_FOLDER_PATH.parent / 'usersaves'
 ########################################################
 
 def save_config_preset(preset_name, distbbox, speedbbox, window_name):
-    PRESET_SAVE_PATH = USER_SAVE_PATH / f'{preset_name}.csv'
+    PRESET_SAVE_PATH = USER_CONFIG_FOLDER_PATH / f'{preset_name}.csv'
 
     # If preset file already exists → error out
     if os.path.exists(PRESET_SAVE_PATH):
@@ -51,7 +53,7 @@ def save_config_preset(preset_name, distbbox, speedbbox, window_name):
 
 
 def load_config_preset(preset_name):
-    PRESET_SAVE_PATH = USER_SAVE_PATH / f'{preset_name}.csv'
+    PRESET_SAVE_PATH = USER_CONFIG_FOLDER_PATH / f'{preset_name}.csv'
     with open(PRESET_SAVE_PATH, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
 
@@ -82,7 +84,7 @@ def load_config_preset(preset_name):
 # Load in and Process Routes
 ########################################################
 def load_in_processed_route(route_name):
-    processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
+    processed_file_path = USER_PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
     gdf = gpd.read_parquet(processed_file_path)
     return gdf
 def convert_gdf_to_lines(gdf):
@@ -97,7 +99,7 @@ def convert_gdf_to_lines(gdf):
 
 
 def load_in_gpx(route_name):
-    gpx_path = UNPROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.gpx'
+    gpx_path = USER_UNPROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.gpx'
     tree = ET.parse(gpx_path)
     root = tree.getroot()
 
@@ -177,7 +179,7 @@ def process_gpx_route(route_name):
     route = load_in_gpx(route_name)
     route = add_cumdist_to_route(route)
     route = add_heading_to_route(route)
-    processed_file_path = PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
+    processed_file_path = USER_PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
     route.to_parquet(processed_file_path, engine='pyarrow', index=False)  
 
 

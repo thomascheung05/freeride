@@ -1,4 +1,5 @@
 import csv
+import os
 from data import ( 
                  save_csv,
                  load_in_processed_route, 
@@ -18,9 +19,14 @@ import base64
 CURRENT_CONFIG = {}
 LAST_COORD = None
 APP_FOLDER_PATH = Path(__file__).parent
-PROCESSED_ROUTES_FOLDER_PATH = APP_FOLDER_PATH.parent / 'routes' / 'processed'
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
-USER_SAVE_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
+USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
+USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
+USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
+
+
 
 
 
@@ -216,7 +222,7 @@ def freeride_stop():
         }
 
         # Make sure file exists; write header if new
-        SAVE_FILE = USER_SAVE_PATH / 'SAVED_RIDES.csv'
+        SAVE_FILE = USER_RIDES_FOLDER_PATH / 'SAVED_RIDES.csv'
         file_exists = SAVE_FILE.exists()
         with open(SAVE_FILE, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=ride_data.keys())
@@ -235,71 +241,56 @@ def freeride_stop():
 
     return jsonify({"status": "success", "message": "Freeride stopped, globals cleared."})
 
+@app.route('/api/init_ui', methods=['GET'])
+def init_ui():
+    # Helper to strip extensions
+    def strip_ext(file_list):
+        return [os.path.splitext(f)[0] for f in file_list]
+
+    # Get unprocessed files
+    try:
+        unprocessed_files = [
+            f for f in os.listdir(USER_UNPROCESSED_ROUTES_FOLDER_PATH)
+            if os.path.isfile(os.path.join(USER_UNPROCESSED_ROUTES_FOLDER_PATH, f))
+        ]
+        unprocessed_files = strip_ext(unprocessed_files)
+    except Exception as e:
+        unprocessed_files = []
+        print("Error reading unprocessed folder:", e)
+
+    # Get processed files
+    try:
+        processed_files = [
+            f for f in os.listdir(USER_PROCESSED_ROUTES_FOLDER_PATH)
+            if os.path.isfile(os.path.join(USER_PROCESSED_ROUTES_FOLDER_PATH, f))
+        ]
+        processed_files = strip_ext(processed_files)
+    except Exception as e:
+        processed_files = []
+        print("Error reading processed folder:", e)
+
+    # Get config presets
+    try:
+        config_presets = [
+            f for f in os.listdir(USER_CONFIG_FOLDER_PATH)
+            if os.path.isfile(os.path.join(USER_CONFIG_FOLDER_PATH, f))
+        ]
+        config_presets = strip_ext(config_presets)
+    except Exception as e:
+        config_presets = []
+        print("Error reading config folder:", e)
+
+    return jsonify({
+        "status": "success",
+        "unprocessed_files": unprocessed_files,
+        "processed_files": processed_files,
+        "config_presets": config_presets
+    })
 
 
 
 if __name__ == '__main__':
     app.run(debug=False)
-
-
-
-
-
-
-
-
-# app = Flask(__name__, static_folder=STATIC_FOLDER_PATH)
-# @app.route('/flask_main', methods=['GET'])
-
-# def flask_main():
-    
-#     action = request.args.get('action')
-
-#     #action = "get_bounding_box_coordinates"
-#     #action = "find_casting_window"
-#     # action = "record_numbers"
-#     #action = "process_data_file"
-#     #action = "get_1_streetview_image"
-
-#     if action == "get_bounding_box_coordinates":
-#         USER_WINDOW_NAME = "LetsView [Cast]"
-#         get_window_relative_bbox(USER_WINDOW_NAME, SCREENSHOTS_FOLDER_PATH / "testingscreenshots.jpg")
-#         jsonify({"status": "success", "message": "Bounding box saved"})
-#     if action == "find_casting_window":
-#         windows = list_visible_windows()
-#         return jsonify({"windows": windows})
-#     if action == "record_numbers":
-#         USER_WINDOW_NAME = "LetsView [Cast]"
-#         bbox = (9, 379, 183, 449)  
-#         capture_interval = 5
-#         total_distance =2
-#         output_csv = "distance_log.csv"
-#         data = freeride_loop(USER_WINDOW_NAME, bbox, capture_interval, total_distance)
-#         save_csv(data, output_csv)
-#     if action == "process_data_file":
-#         process_gpx_route('testroute')
-#     if action == "get_1_streetview_image":
-#         route = load_in_processed_route('testroute')
-#         DISTANCE_ALONGE_ROUTE = 200    
-#         coord_row = get_cord_from_dist_along_route(route, DISTANCE_ALONGE_ROUTE)
-#         img_io  = get_streetview_image_from_coord(coord_row)
-
-#         return send_file(img_io, mimetype='image/png')
-#     return jsonify({"status": "success", "message": "Process Succesful"})
-
-
-# @app.route('/')
-# def serve_html():
-#     return app.send_static_file('web.html')
-
-# if __name__ == '__main__':
-#     app.run(debug=False)
-
-
-
-
-
-
 
 
 
