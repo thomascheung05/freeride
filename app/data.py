@@ -1,12 +1,15 @@
-
-import time
+APP_FOLDER_PATH = Path(__file__).parent
+STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
+USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
+USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
+USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
+USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
 import time
 import pandas as pd
 import numpy as np
 import geopandas as gpd
-from shapely.geometry import Point
-import pandas as pd
-import numpy as np
+from shapely.geometry import Point, LineString
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import requests
@@ -15,38 +18,82 @@ from PIL import Image
 from io import BytesIO
 import csv
 import os
-from shapely.geometry import LineString
+import win32gui, win32ui, ctypes
+from PIL import Image
+import pyautogui
+import pytesseract
 
-APP_FOLDER_PATH = Path(__file__).parent
-STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
-USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
-USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
-USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
-USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
-USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
+def distance_m(lat1, lon1, lat2, lon2):
+    ########################################################
+    # Calculates distance using 2 coordinates
+    ######################################################## 
+    R = 6371000  
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+def save_csv(data, output_csv):
+    ########################################################
+    # Saves a CSV
+    ########################################################     
+    df = pd.DataFrame(data, columns=["timestamp", "distance"])
+    df.to_csv(output_csv, index=False)
+    print(f"Saved data to: {output_csv}")
+
+def compute_heading(lat1, lon1, lat2, lon2):
+    ########################################################
+    # Computes a heading using 2 coordinates
+    ######################################################## 
+    dLon = math.radians(lon2 - lon1)
+    lat1 = math.radians(lat1)
+    lat2 = math.radians(lat2)
+    x = math.sin(dLon) * math.cos(lat2)
+    y = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(dLon)
+    heading = math.degrees(math.atan2(x, y))
+    return (heading + 360) % 360
 
 
 
-########################################################
-# Save and Load Configurations 
-########################################################
 
+#  $$$$$$\                                      $$\ $$\                                $$\ 
+# $$  __$$\                                    $$  |$$ |                               $$ |
+# $$ /  \__| $$$$$$\ $$\    $$\  $$$$$$\      $$  / $$ |      $$$$$$\   $$$$$$\   $$$$$$$ |
+# \$$$$$$\   \____$$\\$$\  $$  |$$  __$$\    $$  /  $$ |     $$  __$$\  \____$$\ $$  __$$ |
+#  \____$$\  $$$$$$$ |\$$\$$  / $$$$$$$$ |  $$  /   $$ |     $$ /  $$ | $$$$$$$ |$$ /  $$ |
+# $$\   $$ |$$  __$$ | \$$$  /  $$   ____| $$  /    $$ |     $$ |  $$ |$$  __$$ |$$ |  $$ |
+# \$$$$$$  |\$$$$$$$ |  \$  /   \$$$$$$$\ $$  /     $$$$$$$$\\$$$$$$  |\$$$$$$$ |\$$$$$$$ |
+#  \______/  \_______|   \_/     \_______|\__/      \________|\______/  \_______| \_______|                                                                         
+#  $$$$$$\                       $$$$$$\  $$\                                              
+# $$  __$$\                     $$  __$$\ \__|                                             
+# $$ /  \__| $$$$$$\  $$$$$$$\  $$ /  \__|$$\  $$$$$$\                                     
+# $$ |      $$  __$$\ $$  __$$\ $$$$\     $$ |$$  __$$\                                    
+# $$ |      $$ /  $$ |$$ |  $$ |$$  _|    $$ |$$ /  $$ |                                   
+# $$ |  $$\ $$ |  $$ |$$ |  $$ |$$ |      $$ |$$ |  $$ |                                   
+# \$$$$$$  |\$$$$$$  |$$ |  $$ |$$ |      $$ |\$$$$$$$ |                                   
+#  \______/  \______/ \__|  \__|\__|      \__| \____$$ |                                   
+#                                             $$\   $$ |                                   
+#                                             \$$$$$$  |                                   
+#                                              \______/                                                                                          
 def save_config_preset(preset_name, distbbox, speedbbox, window_name):
     PRESET_SAVE_PATH = USER_CONFIG_FOLDER_PATH / f'{preset_name}.csv'
 
-    # If preset file already exists → error out
+    
     if os.path.exists(PRESET_SAVE_PATH):
-        raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")
+        raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")# If preset file already exists → error out
 
-    # Create new file and write data
-    with open(PRESET_SAVE_PATH, mode='w', newline='', encoding='utf-8') as f:
+    
+    with open(PRESET_SAVE_PATH, mode='w', newline='', encoding='utf-8') as f:# Create new file and write data
         writer = csv.writer(f)
 
-        # Always write header (new file)
-        writer.writerow(["preset_name", "distbbox", "speedbbox", "window_name"])
+        
+        writer.writerow(["preset_name", "distbbox", "speedbbox", "window_name"])# Always write header (new file)
 
-        # Write preset values
-        writer.writerow([preset_name, distbbox, speedbbox, window_name])
+       
+        writer.writerow([preset_name, distbbox, speedbbox, window_name]) # Write preset values
 
     print(f"Preset '{preset_name}' created at {PRESET_SAVE_PATH}")
     return PRESET_SAVE_PATH
@@ -57,10 +104,10 @@ def load_config_preset(preset_name):
     with open(PRESET_SAVE_PATH, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
 
-        # Read the first (and only) row
-        for row in reader:
-            # Convert bbox strings "10,20,30,40" → tuple of ints
-            distbbox = tuple(map(int, row["distbbox"].strip("()").split(",")))
+        
+        for row in reader:# Read the first (and only) row
+            
+            distbbox = tuple(map(int, row["distbbox"].strip("()").split(",")))# Convert bbox strings "10,20,30,40" → tuple of ints
             speedbbox = tuple(map(int, row["speedbbox"].strip("()").split(",")))
             window_name = row["window_name"]
 
@@ -80,29 +127,72 @@ def load_config_preset(preset_name):
 
 
 
-########################################################
-# Load in and Process Routes
-########################################################
-def load_in_processed_route(route_name):
+# $$$$$$$\                        $$\                                                                     
+# $$  __$$\                       $$ |                                                                    
+# $$ |  $$ | $$$$$$\  $$\   $$\ $$$$$$\    $$$$$$\                                                        
+# $$$$$$$  |$$  __$$\ $$ |  $$ |\_$$  _|  $$  __$$\                                                       
+# $$  __$$< $$ /  $$ |$$ |  $$ |  $$ |    $$$$$$$$ |                                                      
+# $$ |  $$ |$$ |  $$ |$$ |  $$ |  $$ |$$\ $$   ____|                                                      
+# $$ |  $$ |\$$$$$$  |\$$$$$$  |  \$$$$  |\$$$$$$$\                                                       
+# \__|  \__| \______/  \______/    \____/  \_______|                                                                                                                                               
+# $$\                                $$\ $$\                                                              
+# $$ |                               $$ |\__|                             $$\                             
+# $$ |      $$$$$$\   $$$$$$\   $$$$$$$ |$$\ $$$$$$$\   $$$$$$\           $$ |                            
+# $$ |     $$  __$$\  \____$$\ $$  __$$ |$$ |$$  __$$\ $$  __$$\       $$$$$$$$\                          
+# $$ |     $$ /  $$ | $$$$$$$ |$$ /  $$ |$$ |$$ |  $$ |$$ /  $$ |      \__$$  __|                         
+# $$ |     $$ |  $$ |$$  __$$ |$$ |  $$ |$$ |$$ |  $$ |$$ |  $$ |         $$ |                            
+# $$$$$$$$\\$$$$$$  |\$$$$$$$ |\$$$$$$$ |$$ |$$ |  $$ |\$$$$$$$ |         \__|                            
+# \________|\______/  \_______| \_______|\__|\__|  \__| \____$$ |                                         
+#                                                      $$\   $$ |                                         
+#                                                      \$$$$$$  |                                         
+#                                                       \______/                                          
+# $$$$$$$\                                                                        $$\                     
+# $$  __$$\                                                                       \__|                    
+# $$ |  $$ | $$$$$$\   $$$$$$\   $$$$$$$\  $$$$$$\   $$$$$$$\  $$$$$$$\  $$$$$$$\ $$\ $$$$$$$\   $$$$$$\  
+# $$$$$$$  |$$  __$$\ $$  __$$\ $$  _____|$$  __$$\ $$  _____|$$  _____|$$  _____|$$ |$$  __$$\ $$  __$$\ 
+# $$  ____/ $$ |  \__|$$ /  $$ |$$ /      $$$$$$$$ |\$$$$$$\  \$$$$$$\  \$$$$$$\  $$ |$$ |  $$ |$$ /  $$ |
+# $$ |      $$ |      $$ |  $$ |$$ |      $$   ____| \____$$\  \____$$\  \____$$\ $$ |$$ |  $$ |$$ |  $$ |
+# $$ |      $$ |      \$$$$$$  |\$$$$$$$\ \$$$$$$$\ $$$$$$$  |$$$$$$$  |$$$$$$$  |$$ |$$ |  $$ |\$$$$$$$ |
+# \__|      \__|       \______/  \_______| \_______|\_______/ \_______/ \_______/ \__|\__|  \__| \____$$ |
+#                                                                                               $$\   $$ |
+#                                                                                               \$$$$$$  |
+#                                                                                                \______/ 
+# def load_in_processed_route(route_name):
+    ########################################################
+    # Loading in the processed route
+    ########################################################
+
     processed_file_path = USER_PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
     gdf = gpd.read_parquet(processed_file_path)
+
     return gdf
+
+
+
 def convert_gdf_to_lines(gdf):
+    ########################################################
+    # Converting GDF do a line polygon
+    ########################################################
+
     line = LineString(gdf.geometry.tolist())
 
-    # Make a new GeoDataFrame with just the LineString
-    route_line_gdf = gpd.GeoDataFrame(
+    route_line_gdf = gpd.GeoDataFrame(# Make a new GeoDataFrame with just the LineString
         {"geometry": [line]},
         crs=gdf.crs
     )
+
     return route_line_gdf
 
 
+
 def load_in_gpx(route_name):
+    ########################################################
+    # Load in GPX route to become GDF
+    ######################################################## 
+        
     gpx_path = USER_UNPROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.gpx'
     tree = ET.parse(gpx_path)
     root = tree.getroot()
-
     ns = {"g": "http://www.topografix.com/GPX/1/1"}
     
     coords = []
@@ -120,6 +210,9 @@ def load_in_gpx(route_name):
     return route
 
 def add_heading_to_route(route):
+    ########################################################
+    # Each row gets a heading for google image orientation
+    ########################################################     
     gdf = route
     lats = gdf.geometry.y.values
     lons = gdf.geometry.x.values
@@ -128,54 +221,43 @@ def add_heading_to_route(route):
 
     for i in range(len(gdf)):
         if i < len(gdf) - 1:
-            # heading to next point
-            def compute_heading(lat1, lon1, lat2, lon2):
-                """
-                Compute compass heading from point 1 to point 2 in degrees.
-                0 = North, 90 = East, 180 = South, 270 = West
-                """
-                dLon = math.radians(lon2 - lon1)
-                lat1 = math.radians(lat1)
-                lat2 = math.radians(lat2)
-
-                x = math.sin(dLon) * math.cos(lat2)
-                y = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(dLon)
-
-                heading = math.degrees(math.atan2(x, y))
-                return (heading + 360) % 360
-            h = compute_heading(lats[i], lons[i], lats[i+1], lons[i+1])
+            h = compute_heading(lats[i], lons[i], lats[i+1], lons[i+1]) # heading to next point
         else:
-            # last point: repeat previous heading
-            h = headings[-1] if headings else 0
+            h = headings[-1] if headings else 0 # last point: repeat previous heading
         headings.append(h)
 
     gdf["heading"] = headings
     return gdf
 
+
+
 def add_cumdist_to_route(route):
+    ########################################################
+    # Each row gets a cumulative distance along the route value
+    ########################################################      
     gdf = route
 
     mean_lon = gdf.geometry.x.mean()
     utm_zone = int((mean_lon + 180) / 6) + 1
     utm_crs = f"+proj=utm +zone={utm_zone} +datum=WGS84 +units=m +no_defs"
-
-
     gdf_m = gdf.to_crs(utm_crs)
 
     coords = np.array([[p.x, p.y] for p in gdf_m.geometry])
 
     segment_distances = np.sqrt(np.sum(np.diff(coords, axis=0)**2, axis=1))
     segment_distances = np.insert(segment_distances, 0, 0)
-
-
     cumulative_distance = np.cumsum(segment_distances)
 
-    # Add back to original GeoDataFrame
-    gdf["distance_along_m"] = cumulative_distance
+    gdf["distance_along_m"] = cumulative_distance   # Add back to original GeoDataFrame
 
     return gdf
 
+
+
 def process_gpx_route(route_name):
+    ########################################################
+    # Takes in GPX, does all processing required to run in FreeRide, saves as parquet
+    ######################################################## 
     route = load_in_gpx(route_name)
     route = add_cumdist_to_route(route)
     route = add_heading_to_route(route)
@@ -193,12 +275,30 @@ def process_gpx_route(route_name):
 
 
 
-########################################################
-# FreeRide Runner Functions
-########################################################
-
+# $$$$$$$$\                            $$$$$$$\  $$\       $$\           
+# $$  _____|                           $$  __$$\ \__|      $$ |          
+# $$ |    $$$$$$\   $$$$$$\   $$$$$$\  $$ |  $$ |$$\  $$$$$$$ | $$$$$$\  
+# $$$$$\ $$  __$$\ $$  __$$\ $$  __$$\ $$$$$$$  |$$ |$$  __$$ |$$  __$$\ 
+# $$  __|$$ |  \__|$$$$$$$$ |$$$$$$$$ |$$  __$$< $$ |$$ /  $$ |$$$$$$$$ |
+# $$ |   $$ |      $$   ____|$$   ____|$$ |  $$ |$$ |$$ |  $$ |$$   ____|
+# $$ |   $$ |      \$$$$$$$\ \$$$$$$$\ $$ |  $$ |$$ |\$$$$$$$ |\$$$$$$$\ 
+# \__|   \__|       \_______| \_______|\__|  \__|\__| \_______| \_______|
+                                                                       
+                                                                       
+                                                                       
+# $$$$$$$\                                                               
+# $$  __$$\                                                              
+# $$ |  $$ |$$\   $$\ $$$$$$$\                                           
+# $$$$$$$  |$$ |  $$ |$$  __$$\                                          
+# $$  __$$< $$ |  $$ |$$ |  $$ |                                         
+# $$ |  $$ |$$ |  $$ |$$ |  $$ |                                         
+# $$ |  $$ |\$$$$$$  |$$ |  $$ |                                         
+# \__|  \__| \______/ \__|  \__|                                         
 
 def get_cord_from_dist_along_route(route, latest_distance):
+    ########################################################
+    # Inputs route and a distance, Checks all rows for the row with the closest cumdist to latest_distance
+    ######################################################## 
     gdf = route
     idx = (gdf["distance_along_m"] - latest_distance).abs().idxmin()
 
@@ -206,9 +306,10 @@ def get_cord_from_dist_along_route(route, latest_distance):
 
 
 
-
-
 def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
+    ########################################################
+    # Pulls a streetview image using a coordinate
+    ########################################################     
     row = coord_row
     lat = row.geometry.y
     lon = row.geometry.x
@@ -229,10 +330,11 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
 
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
-    # Convert image to bytes for sending directly
-    img_bytes = BytesIO()
+    
+    img_bytes = BytesIO()# Convert image to bytes for sending directly
     img.save(img_bytes, format='PNG')
     img_bytes.seek(0)
+
     return img_bytes
 
 
@@ -240,59 +342,186 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
 
 
 
-def distance_m(lat1, lon1, lat2, lon2):
-    R = 6371000  # meters
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-
-    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
-    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 
 
 
 
 
-
-
-
-
-def save_csv(data, output_csv):
-    df = pd.DataFrame(data, columns=["timestamp", "distance"])
-    df.to_csv(output_csv, index=False)
-    print(f"Saved data to: {output_csv}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#  $$$$$$\                                                             
+# $$  __$$\                                                            
+# $$ /  \__| $$$$$$$\  $$$$$$\   $$$$$$\   $$$$$$\  $$$$$$$\           
+# \$$$$$$\  $$  _____|$$  __$$\ $$  __$$\ $$  __$$\ $$  __$$\          
+#  \____$$\ $$ /      $$ |  \__|$$$$$$$$ |$$$$$$$$ |$$ |  $$ |         
+# $$\   $$ |$$ |      $$ |      $$   ____|$$   ____|$$ |  $$ |         
+# \$$$$$$  |\$$$$$$$\ $$ |      \$$$$$$$\ \$$$$$$$\ $$ |  $$ |         
+#  \______/  \_______|\__|       \_______| \_______|\__|  \__|         
+                                                                     
+                                                                     
+                                                                     
+#  $$$$$$\                       $$\                                   
+# $$  __$$\                      $$ |                                  
+# $$ /  \__| $$$$$$\   $$$$$$\ $$$$$$\   $$\   $$\  $$$$$$\   $$$$$$\  
+# $$ |       \____$$\ $$  __$$\\_$$  _|  $$ |  $$ |$$  __$$\ $$  __$$\ 
+# $$ |       $$$$$$$ |$$ /  $$ | $$ |    $$ |  $$ |$$ |  \__|$$$$$$$$ |
+# $$ |  $$\ $$  __$$ |$$ |  $$ | $$ |$$\ $$ |  $$ |$$ |      $$   ____|
+# \$$$$$$  |\$$$$$$$ |$$$$$$$  | \$$$$  |\$$$$$$  |$$ |      \$$$$$$$\ 
+#  \______/  \_______|$$  ____/   \____/  \______/ \__|       \_______|
+#                     $$ |                                             
+#                     $$ |                                             
+#                     \__|                                                
 
 
 
 
 
 
+def list_visible_windows():
+    def enum_windows(hwnd, results):
+        if win32gui.IsWindowVisible(hwnd):
+            title = win32gui.GetWindowText(hwnd)
+            if title and "default" not in title.lower():  # skip empty or "default" titles
+                results.append((hwnd, title))
+
+    windows = []
+    win32gui.EnumWindows(enum_windows, windows)
+
+    if not windows:
+        print("No visible windows found (excluding 'default').")
+    else:
+        for hwnd, title in windows:
+            print(f"HWND: {hwnd}, Title: {title}")
+    return windows
 
 
 
 
 
+def get_window_relative_bbox(window_title):
+    # Find the window
+    hwnd = win32gui.FindWindow(None, window_title)
+    if not hwnd:
+        print("Window not found!")
+        return 
+
+    # Get client area top-left in screen coordinates
+    client_left, client_top = win32gui.ClientToScreen(hwnd, (0, 0))
+    print(f"Window client area top-left on screen: {client_left}, {client_top}")
+
+    # Let user click top-left and bottom-right
+    print("Move your mouse to the TOP-LEFT corner of the number and wait 3 seconds...")
+    time.sleep(3)
+    abs_left, abs_top = pyautogui.position()
+    print(f"Top-left clicked: {abs_left}, {abs_top}")
+
+    print("Move your mouse to the BOTTOM-RIGHT corner of the number and wait 3 seconds...")
+    time.sleep(3)
+    abs_right, abs_bottom = pyautogui.position()
+    print(f"Bottom-right clicked: {abs_right}, {abs_bottom}")
+
+    # Convert absolute screen coordinates to window-relative coordinates
+    rel_left = abs_left - client_left
+    rel_top = abs_top - client_top
+    rel_right = abs_right - client_left
+    rel_bottom = abs_bottom - client_top
+
+    bbox = (rel_left, rel_top, rel_right, rel_bottom)
+    print(f"Bounding box relative to window: {bbox}")
+    screenshot = capture_window_region(window_title, bbox, speed_bbox= None)
+
+    return bbox, screenshot
+
+
+
+
+
+def capture_window_region(title, dist_bbox, speed_bbox):
+    hwnd = win32gui.FindWindow(None, title) # stores the window in this variable
+    if not hwnd:
+        print("Window not found!")
+        return None
+    
+    left, top, right, bottom = win32gui.GetClientRect(hwnd) # gets the dimensions of the window
+    width = right - left
+    height = bottom - top
+
+    hwndDC = win32gui.GetWindowDC(hwnd) # Gets the “device context” for the window, basically a pointer to its pixels.
+    mfcDC = win32ui.CreateDCFromHandle(hwndDC) # Wraps the DC in a Python object we can work with.
+    saveDC = mfcDC.CreateCompatibleDC() # A memory DC that we can copy the window image into.
+    bmp = win32ui.CreateBitmap() # We create a blank bitmap the same size as the window.
+    bmp.CreateCompatibleBitmap(mfcDC, width, height)
+    saveDC.SelectObject(bmp) # SelectObject tells saveDC to draw into this bitmap.
+    PW_RENDERFULLCONTENT = 0x00000002
+    ctypes.windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), PW_RENDERFULLCONTENT) #PrintWindow is a Windows function that copies the actual window content into a DC. PW_RENDERFULLCONTENT ensures the entire content is rendered, even if the window is partially offscreen. saveDC.GetSafeHdc() gets a handle to our memory DC so Windows knows where to draw.
+
+    bmpinfo = bmp.GetInfo() # gets infor on bitmap like widht and height
+    bmpstr = bmp.GetBitmapBits(True)    # Extracts raw pixel data
+    img = Image.frombuffer( # converts to pillow image
+        'RGB',
+        (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
+        bmpstr, 'raw', 'BGRX', 0, 1
+    )
+
+    
+    dist_cropped_img = img.crop(dist_bbox)    # crops the image to only the bounding box
+    if speed_bbox != None:
+        speed_cropped_img = img.crop(speed_bbox)
+        # free up resources 
+        win32gui.DeleteObject(bmp.GetHandle())
+        saveDC.DeleteDC()
+        mfcDC.DeleteDC()
+        win32gui.ReleaseDC(hwnd, hwndDC)
+
+        return dist_cropped_img, speed_cropped_img
+           
+
+    win32gui.DeleteObject(bmp.GetHandle())
+    saveDC.DeleteDC()
+    mfcDC.DeleteDC()
+    win32gui.ReleaseDC(hwnd, hwndDC)
+
+    return dist_cropped_img
+
+
+
+
+
+def extract_number_from_image(img):
+    tesseract_path = r"C:\Users\Thomas\Main\freeride\tesseract\tesseract.exe"
+    pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    text = pytesseract.image_to_string(img, config='--psm 7')  # single line
+    text = text.strip().replace(',', '')
+    try:
+        return float(text)
+    except ValueError:
+        return None
+    
+
+
+
+
+def get_data_once(window_title, distbbox, speedbbox, distance_units):
+    """
+    Captures window, extracts number, returns (timestamp, distance or NaN)
+    """
+    dist_img, speed_img = capture_window_region(window_title, distbbox, speedbbox)
+
+    distance = extract_number_from_image(dist_img)
+    if distance is None:
+        distance = np.nan
+    else:
+        if distance_units == 'km':
+            distance = distance * 1000
+        if distance_units == 'miles':
+            distance = distance * 1609
+
+    if speed_img != None:
+        speed = extract_number_from_image(speed_img)
+        if speed is None:
+            speed = np.nan
+        return distance, speed
+
+    return distance
 
 
 

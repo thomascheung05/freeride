@@ -1,21 +1,3 @@
-import csv
-import os
-from data import ( 
-                 save_csv,
-                 load_in_processed_route, 
-                 process_gpx_route, convert_gdf_to_lines,
-                 get_cord_from_dist_along_route, 
-                 get_streetview_image_from_coord,distance_m,
-                 save_config_preset,load_config_preset)
-from screencapture import (get_window_relative_bbox, 
-                           list_visible_windows,
-                           get_data_once)
-from flask import Flask, json, render_template, request, jsonify, send_file, Response
-from pathlib import Path
-from io import BytesIO
-import io
-import time
-import base64
 CURRENT_CONFIG = {}
 LAST_COORD = None
 APP_FOLDER_PATH = Path(__file__).parent
@@ -25,25 +7,48 @@ USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
 USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
 USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
 USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
+from data import ( 
+                 load_in_processed_route, 
+                 process_gpx_route, 
+                 convert_gdf_to_lines,
+                 get_cord_from_dist_along_route, 
+                 get_streetview_image_from_coord,
+                 distance_m,
+                 save_config_preset,load_config_preset,
+                 get_window_relative_bbox,
+                 list_visible_windows,
+                 get_data_once)
+import csv
+import os
+from flask import Flask, json,request, jsonify
+from pathlib import Path
+from io import BytesIO
+import time
+import base64
 
 
 
 
 
+
+
+
+#############################
+# Main Flask 
+#############################
 app = Flask(__name__, static_folder= STATIC_FOLDER_PATH)
-
-# Serve your main HTML
 @app.route('/')
 def serve_html():
     return app.send_static_file('web.html')
 
 
-# Example endpoint for "get_window"
+
 @app.route('/api/get_window', methods=['GET'])
 def get_window():
     windows = list_visible_windows()
     formatted_windows = "\n".join([f"Title: {title}, HWND: {hwnd}" for hwnd, title in windows])
     return jsonify({"formatted_windows": formatted_windows})
+
 
 
 @app.route('/api/get_bbox', methods=['POST'])
@@ -92,7 +97,6 @@ def save_preset():
 
 
 
-
 @app.route('/api/process_route', methods=['POST'])
 def process_route():
     data = request.get_json()
@@ -115,10 +119,9 @@ def freeride_run():
     route_name = data["route"]
     start_dist = data["start_dist"]
 
-    
     preset = load_config_preset(preset_name)
 
-    # Save everything to global memory
+    
     CURRENT_CONFIG["dist_bbox"] = preset["distbbox"]
     CURRENT_CONFIG["speed_bbox"] = preset["speedbbox"]
     CURRENT_CONFIG["window_name"] = preset["window_name"]
@@ -134,6 +137,7 @@ def freeride_run():
         "route": route_line_geojson 
     })
     
+
 
 @app.route("/api/get_position", methods=["GET"])
 def get_position():
@@ -176,8 +180,6 @@ def get_position():
     print(f"{'Distance along route:':<20} {cord_row.distance_along_m:.3f}")
     print(f"{'Heading:':<20} {cord_row.heading:.3f}")
     print()
-
-
 
     latest_steet_img = None
     if should_pull_image:
@@ -241,6 +243,8 @@ def freeride_stop():
 
     return jsonify({"status": "success", "message": "Freeride stopped, globals cleared."})
 
+
+
 @app.route('/api/init_ui', methods=['GET'])
 def init_ui():
     # Helper to strip extensions
@@ -291,11 +295,3 @@ def init_ui():
 
 if __name__ == '__main__':
     app.run(debug=False)
-
-
-
-
-
-
-
-
