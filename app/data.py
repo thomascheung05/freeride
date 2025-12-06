@@ -1,10 +1,3 @@
-APP_FOLDER_PATH = Path(__file__).parent
-STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
-USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
-USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
-USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
-USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
-USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
 import time
 import pandas as pd
 import numpy as np
@@ -22,7 +15,13 @@ import win32gui, win32ui, ctypes
 from PIL import Image
 import pyautogui
 import pytesseract
-
+APP_FOLDER_PATH = Path(__file__).parent
+STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
+USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
+USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
+USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
+USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
 def distance_m(lat1, lon1, lat2, lon2):
     ########################################################
     # Calculates distance using 2 coordinates
@@ -157,7 +156,7 @@ def load_config_preset(preset_name):
 #                                                                                               $$\   $$ |
 #                                                                                               \$$$$$$  |
 #                                                                                                \______/ 
-# def load_in_processed_route(route_name):
+def load_in_processed_route(route_name):
     ########################################################
     # Loading in the processed route
     ########################################################

@@ -1,12 +1,4 @@
-CURRENT_CONFIG = {}
-LAST_COORD = None
-APP_FOLDER_PATH = Path(__file__).parent
-STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
-USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
-USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
-USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
-USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
-USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
+import math
 from data import ( 
                  load_in_processed_route, 
                  process_gpx_route, 
@@ -26,7 +18,15 @@ from io import BytesIO
 import time
 import base64
 
-
+CURRENT_CONFIG = {}
+LAST_REC_DIST = None
+APP_FOLDER_PATH = Path(__file__).parent
+STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
+USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
+USER_CONFIG_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'config'
+USER_RIDES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'rides'
+USER_UNPROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'unprocessed'
+USER_PROCESSED_ROUTES_FOLDER_PATH = USER_SAVE_FOLDER_PATH / 'routes' / 'processed'
 
 
 
@@ -148,26 +148,28 @@ def get_position():
     cord_row = get_cord_from_dist_along_route(route, latest_distance)
     lat = float(cord_row.geometry.y)
     lon = float(cord_row.geometry.x)
-    if latest_speed is None:
-        latest_speed = 999
+    if latest_speed is None or math.isnan(latest_speed):
+        latest_speed = 9999999     
  
-
+    # sometimes, cord_row.distance_along_m value is the same as last record, the points are spaced out enough so i did not make it to the next point
+    # Add a check here, if cord_row.distance_along_m is the same as last time, dont pull an image
     should_pull_image = False
-    global LAST_COORD
-    if LAST_COORD is None:
+    global LAST_REC_DIST
+    if LAST_REC_DIST is None:
         # First time ever → pull an image
         should_pull_image = True
-        LAST_COORD = (lat, lon)
-
+        LAST_REC_DIST = latest_distance
+        d = 15
     else:
-        prev_lat, prev_lon = LAST_COORD
-        d = distance_m(prev_lat, prev_lon, lat, lon)
+        prev_dist = LAST_REC_DIST
+        d = latest_distance - prev_dist
 
-        if d > 50:                 # moved more than 50 m
+        if d > 15:                 # moved more than 15 m
             should_pull_image = True
-            LAST_COORD = (lat, lon)  # update global stored coordinate
+            LAST_REC_DIST = latest_distance  # update global stored coordinate
         else:
             should_pull_image = False
+            
 
     print("="*90)
     print("NEW POSITION RECORDED")
@@ -175,15 +177,15 @@ def get_position():
     print()
     print(f"{'Recorded Distance:':<20} {latest_distance:.3f}")
     print(f"{'Recorded Speed:':<20} {latest_speed:.3f}")
-    print(f"{'Latitude:':<20} {cord_row.geometry.y:.6f}")
-    print(f"{'Longitude:':<20} {cord_row.geometry.x:.6f}")
+    print(f"{'Latitude:':<20} {lat:.6f}")
+    print(f"{'Longitude:':<20} {lon:.6f}")
     print(f"{'Distance along route:':<20} {cord_row.distance_along_m:.3f}")
     print(f"{'Heading:':<20} {cord_row.heading:.3f}")
     print()
 
     latest_steet_img = None
     if should_pull_image:
-        print("------->Pulling new StreetView image (moved >50 m)")
+        print(f'------->Pulling new StreetView image (moved {d}m)')
         
         def encode_image_to_base64(image_io):
             import base64
@@ -195,8 +197,9 @@ def get_position():
         
         latest_steet_img = get_streetview_image_from_coord(cord_row, fov=90, pitch=0, size="600x400")
         latest_steet_img_b64 = encode_image_to_base64(latest_steet_img)
+        print("-------> Image Success!")
     else:
-        print("------->Skipping image (not moved enough)")
+        print(f'------->Skipping image ((moved {d}m)')
         latest_steet_img_b64 = None  # now it's safely defined
     print("="*90)    
     return jsonify({
@@ -211,7 +214,7 @@ def get_position():
 
 @app.route('/api/freeride_stop', methods=['POST'])
 def freeride_stop():
-    global CURRENT_CONFIG, LAST_COORD
+    global CURRENT_CONFIG, LAST_REC_DIST
     if CURRENT_CONFIG:
         # Pick variables you want to save
         ride_data = {
@@ -235,7 +238,7 @@ def freeride_stop():
 
     # Clear global state
     CURRENT_CONFIG = {}
-    LAST_COORD = None
+    LAST_REC_DIST = None
 
     print("="*10)
     print("FREERIDE STOPPED: global variables cleared")

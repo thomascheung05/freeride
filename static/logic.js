@@ -23,7 +23,7 @@ document.getElementById("stopRoute").addEventListener("click", async () => {
             console.log("Freeride runner stopped (client).");
         }
         const defaultImgSrc = "/static/img/duck.jpg"; // replace with your default image
-        const imageElems = ["image", "smallimage"];
+        const imageElems = ["image", "smallImage"];
         imageElems.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.src = defaultImgSrc;
@@ -123,7 +123,7 @@ async function pollPosition() {
                 "data:image/png;base64," + data.image;
         }
         if (data.image) {
-            document.getElementById("smallimage").src =
+            document.getElementById("smallImage").src =
                 "data:image/png;base64," + data.image;
         }
         if (smallbikeMarker && data.lat && data.lon) {
