@@ -20,6 +20,7 @@ import base64
 
 CURRENT_CONFIG = {}
 LAST_REC_DIST = None
+LAST_DIST_ALONG_ROUTE = None
 APP_FOLDER_PATH = Path(__file__).parent
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
 USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
@@ -127,6 +128,7 @@ def freeride_run():
     CURRENT_CONFIG["window_name"] = preset["window_name"]
     CURRENT_CONFIG["route_name"] = route_name
     CURRENT_CONFIG["latest_distance"] = start_dist
+    
     route = load_in_processed_route(route_name)
     CURRENT_CONFIG["route"] = route
     route_line = convert_gdf_to_lines(route)
@@ -148,6 +150,7 @@ def get_position():
     cord_row = get_cord_from_dist_along_route(route, latest_distance)
     lat = float(cord_row.geometry.y)
     lon = float(cord_row.geometry.x)
+    dist_along_route = cord_row.distance_along_m
     if latest_speed is None or math.isnan(latest_speed):
         latest_speed = 9999999     
  
@@ -155,18 +158,19 @@ def get_position():
     # Add a check here, if cord_row.distance_along_m is the same as last time, dont pull an image
     should_pull_image = False
     global LAST_REC_DIST
+    global LAST_DIST_ALONG_ROUTE 
     if LAST_REC_DIST is None:
-        # First time ever → pull an image
         should_pull_image = True
         LAST_REC_DIST = latest_distance
+        LAST_DIST_ALONG_ROUTE = dist_along_route
         d = 15
     else:
-        prev_dist = LAST_REC_DIST
-        d = latest_distance - prev_dist
+        d = latest_distance - LAST_REC_DIST
 
-        if d > 15:                 # moved more than 15 m
+        if d > 15 and LAST_DIST_ALONG_ROUTE != dist_along_route:                 # moved more than 15 m
             should_pull_image = True
-            LAST_REC_DIST = latest_distance  # update global stored coordinate
+            LAST_REC_DIST = latest_distance  
+            LAST_DIST_ALONG_ROUTE = dist_along_route
         else:
             should_pull_image = False
             
@@ -179,7 +183,7 @@ def get_position():
     print(f"{'Recorded Speed:':<20} {latest_speed:.3f}")
     print(f"{'Latitude:':<20} {lat:.6f}")
     print(f"{'Longitude:':<20} {lon:.6f}")
-    print(f"{'Distance along route:':<20} {cord_row.distance_along_m:.3f}")
+    print(f"{'Distance along route:':<20} {dist_along_route:.3f}")
     print(f"{'Heading:':<20} {cord_row.heading:.3f}")
     print()
 
@@ -214,7 +218,7 @@ def get_position():
 
 @app.route('/api/freeride_stop', methods=['POST'])
 def freeride_stop():
-    global CURRENT_CONFIG, LAST_REC_DIST
+    global CURRENT_CONFIG, LAST_REC_DIST, LAST_DIST_ALONG_ROUTE
     if CURRENT_CONFIG:
         # Pick variables you want to save
         ride_data = {
@@ -239,6 +243,7 @@ def freeride_stop():
     # Clear global state
     CURRENT_CONFIG = {}
     LAST_REC_DIST = None
+    LAST_DIST_ALONG_ROUTE = None
 
     print("="*10)
     print("FREERIDE STOPPED: global variables cleared")

@@ -208,6 +208,30 @@ def load_in_gpx(route_name):
 
     return route
 
+
+def densify_route(gdf):
+    new_points = []
+
+    for i in range(len(gdf) - 1):
+        p1 = gdf.geometry.iloc[i]
+        p2 = gdf.geometry.iloc[i + 1]
+
+        # Original point
+        new_points.append(p1)
+
+        # Midpoint
+        mid = Point(
+            (p1.x + p2.x) / 2,
+            (p1.y + p2.y) / 2
+        )
+        new_points.append(mid)
+
+    # Add last point
+    new_points.append(gdf.geometry.iloc[-1])
+
+    return gpd.GeoDataFrame(geometry=new_points, crs=gdf.crs)
+
+
 def add_heading_to_route(route):
     ########################################################
     # Each row gets a heading for google image orientation
@@ -258,10 +282,12 @@ def process_gpx_route(route_name):
     # Takes in GPX, does all processing required to run in FreeRide, saves as parquet
     ######################################################## 
     route = load_in_gpx(route_name)
+    route = densify_route(route)
     route = add_cumdist_to_route(route)
     route = add_heading_to_route(route)
     processed_file_path = USER_PROCESSED_ROUTES_FOLDER_PATH / f'{route_name}.parquet'
     route.to_parquet(processed_file_path, engine='pyarrow', index=False)  
+    route.to_csv('route.csv', index=False)
 
 
 
