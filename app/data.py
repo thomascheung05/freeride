@@ -331,7 +331,7 @@ def get_cord_from_dist_along_route(route, latest_distance):
 
 
 
-def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="600x400"):
+def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="640x640"):
     ########################################################
     # Pulls a streetview image using a coordinate
     ########################################################     
