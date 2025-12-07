@@ -79,7 +79,6 @@ def compute_heading(lat1, lon1, lat2, lon2):
 #                                              \______/                                                                                          
 def save_config_preset(preset_name, distbbox, speedbbox, window_name):
     PRESET_SAVE_PATH = USER_CONFIG_FOLDER_PATH / f'{preset_name}.csv'
-
     
     if os.path.exists(PRESET_SAVE_PATH):
         raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")# If preset file already exists → error out

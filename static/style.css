@@ -168,3 +168,47 @@
 #getBboxModal.hidden {
     display: none;  /* Hide by default */
 }
+
+
+
+
+
+
+
+
+
+
+#configModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    /* Remove flex centering */
+    display: block; 
+}
+#configModal .modal-content {
+    position: absolute;        /* inside the fixed overlay */
+    top: 250px;                  /* vertically centered */
+    right: 250px;               /* distance from the right edge */
+    transform: translateY(-50%); /* actually centers vertically */
+    background-color: rgba(29, 28, 28, 0.875);
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 250px;
+    max-width: 700px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    color: rgba(255, 255, 255, 0.988);
+}
+#configModal .close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+    cursor: pointer;
+}
+#configModal.hidden {
+    display: none !important;;  /* Hide by default */
+}

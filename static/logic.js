@@ -43,6 +43,12 @@ document.getElementById("stopRoute").addEventListener("click", async () => {
         console.error("Error stopping freeride:", err);
     }
 });
+document.getElementById("configButton").addEventListener("click", showConfigModal);
+document.getElementById("configmodalClose").addEventListener("click", () => {document.getElementById("configModal").classList.add("hidden");});
+
+
+
+
 
 async function freerideRun() {
     const userPresetName = document.getElementById("userPresetName").value;
@@ -112,6 +118,9 @@ async function freerideRun() {
 }
 
 
+
+
+
 async function pollPosition() {
     try {
         const response = await fetch("/api/get_position");
@@ -139,6 +148,9 @@ async function pollPosition() {
 }
 
 
+
+
+
 async function processRoute(){
     const userRouteToProcess = document.getElementById("userRouteToProcess").value;
 
@@ -152,6 +164,9 @@ async function processRoute(){
     const data = await response.json();
     console.log(data);
 }
+
+
+
 
 
 async function savePreset(){
@@ -173,6 +188,9 @@ async function savePreset(){
     const data = await response.json();
     console.log(data);
 }
+
+
+
 
 
 async function getBbox(){
@@ -197,6 +215,20 @@ async function getBbox(){
         bboxmodal.classList.remove("hidden");
     }
 }
+
+
+
+
+
+function showConfigModal() {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Open config modal
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    const modal = document.getElementById("configModal");
+    modal.classList.remove("hidden");
+}
+
+
 
 
 async function fetchVisibleWindows() {
@@ -228,6 +260,9 @@ async function fetchVisibleWindows() {
         console.error("Error fetching windows:", err);
     }
 }
+
+
+
 
 
 async function initUI() {
@@ -336,95 +371,3 @@ async function initUI() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-// var map = L.map('map').setView([45.5017, -73.5673], 12);
-// L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//     attribution: '© OpenStreetMap contributors'
-// }).addTo(map);
-
-
-
-
-
-
-
-
-// window.addEventListener('DOMContentLoaded', () => {
-//     // Initialize Leaflet map
-
-    
-//     const mainSidebar = document.getElementById('mainSidebar');
-//     const ssSidebar = document.getElementById('ssSidebar');
-//     const windowList = document.getElementById('windowList');
-
-//     // Swap sidebar buttons
-//     document.getElementById('ssSidebarButton').addEventListener('click', () => {
-//         mainSidebar.classList.add('d-none');
-//         ssSidebar.classList.remove('d-none');
-//     });
-
-//     document.getElementById('backToMain').addEventListener('click', () => {
-//         ssSidebar.classList.add('d-none');
-//         mainSidebar.classList.remove('d-none');
-//         windowList.innerHTML = ""; // Clear list when going back
-//     });
-    
-//     // Fetch windows from Flask
-//     document.getElementById('getAllWindows').addEventListener('click', () => {
-//         fetch(`/flask_main?action=find_casting_window`)
-//             .then(response => response.json())
-//             .then(data => {
-//                 // Clear previous list
-//                 windowList.innerHTML = "";
-
-//                 // Assume Flask returns an array of window names
-//                 data.windows.forEach(win => {
-//                     const li = document.createElement('li');
-//                     li.textContent = win;
-//                     li.className = "list-group-item";
-//                     windowList.appendChild(li);
-//                 });
-//             })
-//             .catch(err => console.error(err));
-//     });
-
-
-// }); // ← this closes the DOMContentLoaded event listener
-
-
-
-
-// function sendAction() {
-//     const action = document.getElementById('actionSelect').value;
-
-//     fetch(`/flask_main?action=${encodeURIComponent(action)}`)
-//         .then(response => {
-//             // If response is an image
-//             const contentType = response.headers.get("content-type");
-//             if (contentType && contentType.includes("image")) {
-//                 return response.blob();
-//             } else {
-//                 return response.json();
-//             }
-//         })
-//         .then(data => {
-//             if (data instanceof Blob) {
-//                 const imgUrl = URL.createObjectURL(data);
-//                 document.getElementById('resultImage').src = imgUrl;
-//             } else if (data) {
-//                 // Only log to console, no popups
-//                 console.log(data.message);
-//             }
-//         })
-//         .catch(err => console.error(err));
-// }

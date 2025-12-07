@@ -24,37 +24,13 @@
 
     <button id="menuButton">☰</button>
     <div id="sidePanel">
-        
-        <div class="swap-row">
+
+         <div class="swap-row">
             <button id="swapButton">Swap Views</button>
-        </div>
-        <h5>Configuration</h5>
-        <div class="swap-row">
-            <label for="configPreset">Config Preset   |   </label>
-            <input type="text" id="userConfigPresetName" placeholder="Preset Name">
-            <button id="savePreset">Save Preset</button>
+            <button id="configButton">Config Settings</button>
         </div>  
-        <div class="swap-row">
-            <label for="windows">Screen Cap   |   </label>
-            <input type="text" id="userWindow" placeholder="Window Tittle">
-            <button id="getWindowsButton">Show Windows</button>
-        </div>  
-        <div class="swap-row">
-            <label for="BBOX">BBOx   |   </label>
-            <input type="text" id="userDistBbox" placeholder="Distance bbox">
-            <input type="text" id="userSpeedBbox" placeholder="Speed bbox">
-            <button id="getbbox">Measure a bbox</button>
-        </div>    
 
         <h5>Runner</h5>
-
-        <div class="swap-row">
-            <label for="routeSelect">Process Route   |   </label>
-            <select id="userRouteToProcess">
-                <option value="" disabled selected>Unprocessed Route</option>
-            </select>
-            <button id="processRoute">Process Route</button>
-        </div>  
         
         <div class="swap-row">
             <label for="runRoute">Start Route   |   </label>
@@ -75,9 +51,13 @@
         <div class="swap-row">
             <button id="startRoute">START</button>
             <button id="stopRoute">STOP</button>
-            
         </div>  
     </div>
+
+
+
+
+
 
 
     <div id="mainContainer">
@@ -85,10 +65,50 @@
         <img id="image" src="/static/img/duck.jpg" alt="Preview">
     </div>
 
+
+
     <div id="smallWindow">
         <div id="smallMap"></div>
         <img id="smallImage" src="/static/img/duck.jpg" alt="Preview">
     </div>
+
+
+
+    <div id="configModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="configmodalClose" class="close">&times;</span>
+            <h5>Configuration settings</h5>
+
+            <div class="swap-row">
+                <label for="configPreset">Config Preset   |   </label>
+                <input type="text" id="userConfigPresetName" placeholder="Preset Name">
+                <button id="savePreset">Save Preset</button>
+            </div>  
+
+            <div class="swap-row">
+                <label for="windows">Screen Cap   |   </label>
+                <input type="text" id="userWindow" placeholder="Window Tittle">
+                <button id="getWindowsButton">Show Windows</button>
+            </div>  
+
+            <div class="swap-row">
+                <label for="BBOX">BBOx   |   </label>
+                <input type="text" id="userDistBbox" placeholder="Distance bbox">
+                <input type="text" id="userSpeedBbox" placeholder="Speed bbox">
+                <button id="getbbox">Measure a bbox</button>
+            </div>  
+
+            <div class="swap-row">
+                <label for="routeSelect">Process Route   |   </label>
+                <select id="userRouteToProcess">
+                    <option value="" disabled selected>Unprocessed Route</option>
+                </select>
+                <button id="processRoute">Process Route</button>
+            </div>  
+        </div>
+    </div>
+
+
 
     <div id="getWindowsModal" class="modal hidden">
         <div class="modal-content">
@@ -106,65 +126,14 @@
             <h5>BBOX Test Screenshot:</h5>
             <p id="bboxModalText"></p>
         </div>
-
-
-
-
     </div>
+
+
+
+
 
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>    
 <script src="./static/logic.js"></script>
 
 </html> 
-
-<!-- <body>
-    <div class="container-fluid">
-        <div class="row">
-             
-            <div id="mainSidebar" class="col-md-3 col-lg-2">
-                <h4>Sidebar</h4>
-                <p>Place buttons, menus, or info here.</p>
-                <button id="ssSidebarButton" class="btn btn-primary mb-2">SCS</button>
-                <button id="processgpxButton" class="btn btn-secondary mb-2">Process .gpx File</button>
-            </div>
-             
-            <div id="ssSidebar" class="col-md-3 col-lg-2 sidebar d-none">
-                <h4>Screen Capture Settings</h4>
-                <button id="getAllWindows" class="btn btn-primary mb-2">List All Windows</button>
-                <ul id="windowList" class="list-group mb-2"></ul>
-
-
-                <button id="backToMain" class="btn btn-secondary">Back</button>
-            </div>
-
-             
-            <div class="col-md-9 col-lg-10 p-0">
-                <div id="map"></div>
-            </div>
-        </div>
-    </div>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>    
-<script src="./static/logic.js"></script>
-
-</html>  -->
-
-
-
-<!-- <body>
-    <h1>Input Action</h1>
-    <select id="actionSelect">
-        <option value="get_bounding_box_coordinates">Get Bounding Box Coordinates</option>
-        <option value="find_casting_window">Find Casting Window</option>
-        <option value="record_distance">Record Distance</option>
-        <option value="process_data_file">Process a Data File</option>
-        <option value="get_1_streetview_image">Get 1 StreetView Image</option>
-    </select>
-    <button onclick="sendAction()">GO</button>
-
-    <h2>Image</h2>
-    <img id="resultImage" src="" alt="Your image will appear here" width="600">
-</body>
-
-
-
