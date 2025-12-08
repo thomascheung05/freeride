@@ -426,7 +426,7 @@ def get_window_relative_bbox(window_title):
     hwnd = win32gui.FindWindow(None, window_title)
     if not hwnd:
         print("Window not found!")
-        return 
+        return None, None 
 
     # Get client area top-left in screen coordinates
     client_left, client_top = win32gui.ClientToScreen(hwnd, (0, 0))

@@ -204,13 +204,18 @@ async function getBbox(){
 
     const data = await response.json();
     console.log(data);
-    showbboxModal(data.screenshot); // pass the base64 string
 
-    function showbboxModal(imageBase64) {  // use the correct parameter
+
+    if (data.status === "error") {
+        alert(data.message);   
+        return;
+    }
+    showbboxModal(data.screenshot);  
+    function showbboxModal(imageBase64) {   
         const bboxmodal = document.getElementById("getBboxModal");
         const bboxModalText = document.getElementById("bboxModalText");
 
-        // Insert the image
+         
         bboxModalText.innerHTML = `<img src="data:image/png;base64,${imageBase64}" style="max-width:100%; max-height:80vh;">`;
         bboxmodal.classList.remove("hidden");
     }

@@ -57,9 +57,16 @@ def get_bbox():
     data = request.get_json()
     USER_WINDOW_NAME = data.get("window_name", "")
     if not USER_WINDOW_NAME:
-        USER_WINDOW_NAME = "LetsView [Cast]"
+        USER_WINDOW_NAME = "No Window Name Inputed"
 
     bbox, screenshot = get_window_relative_bbox(USER_WINDOW_NAME)
+    if bbox is None or screenshot is None:
+        return jsonify({
+            "status": "error",
+            "code": "WINDOW_NOT_FOUND",
+            "message": f"Error:{USER_WINDOW_NAME}"
+        }), 404     
+      
     buffered = BytesIO()
     screenshot.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
