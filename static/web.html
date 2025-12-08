@@ -26,14 +26,15 @@
     <div id="sidePanel">
 
          <div class="swap-row">
+                        <button id="startRoute">START</button>
+            <button id="stopRoute">STOP</button>
             <button id="swapButton">Swap Views</button>
             <button id="configButton">Config Settings</button>
         </div>  
 
-        <h5>Runner</h5>
-        
+
         <div class="swap-row">
-            <label for="runRoute">Start Route   |   </label>
+            <label for="runRoute">Start Route|</label>
 
             <!-- Dropdown for config presets -->
             <select id="userPresetName">
@@ -48,10 +49,7 @@
             <input type="text" id="startDist" placeholder="Start Distance">
         </div>
 
-        <div class="swap-row">
-            <button id="startRoute">START</button>
-            <button id="stopRoute">STOP</button>
-        </div>  
+
     </div>
 
 
@@ -92,7 +90,7 @@
             </div>  
 
             <div class="swap-row">
-                <label for="BBOX">BBOx   |   </label>
+                <label for="BBOX">BBOX   |   </label>
                 <input type="text" id="userDistBbox" placeholder="Distance bbox">
                 <input type="text" id="userSpeedBbox" placeholder="Speed bbox">
                 <button id="getbbox">Measure a bbox</button>
