@@ -396,10 +396,6 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="640x640"):
 #                     \__|                                                
 
 
-
-
-
-
 def list_visible_windows():
     def enum_windows(hwnd, results):
         if win32gui.IsWindowVisible(hwnd):
