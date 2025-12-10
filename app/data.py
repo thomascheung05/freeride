@@ -668,6 +668,7 @@ def notification_handler(sender, data): # sender is characteristic handle/ID giv
     # if speed_kmh is not None:
     #     print(f"Speed (km/h): {speed_kmh:.2f}")
     # print("-" * 30)
+    
 
 
 async def fx_connect_to_device():
@@ -675,7 +676,7 @@ async def fx_connect_to_device():
 
     async with BleakClient(DEVICE_ID) as client:
         if client.is_connected:
-            print("Connected to KICKR SNAP!")
+            print("Connected to KICKR SNAP")
             # Subscribe to notifications
             await client.start_notify(CHAR_UUID, notification_handler)
             print("Subscribed to notifications. Waiting for data...")
