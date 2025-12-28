@@ -1,4 +1,12 @@
+pandas
+geopandas
+shapely
+requests
+pyautogui
+pytesseract
+bleak
+flask
 pywin32
 pygetwindow
 pyautogui
-time
+Pillow
