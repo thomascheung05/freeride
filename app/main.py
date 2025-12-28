@@ -10,13 +10,13 @@ from data import (
                  get_window_relative_bbox,
                  list_visible_windows,
                  get_data_once)
-import csv
-import os
-from flask import Flask, json,request, jsonify
-from pathlib import Path
-from io import BytesIO
-import time
-import base64
+import csv# type: ignore
+import os# type: ignore
+from flask import Flask, json,request, jsonify# type: ignore
+from pathlib import Path# type: ignore
+from io import BytesIO# type: ignore
+import time# type: ignore
+import base64# type: ignore
 
 CURRENT_CONFIG = {}
 LAST_REC_DIST = None

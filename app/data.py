@@ -1,22 +1,22 @@
 import time
-import pandas as pd
-import numpy as np
-import geopandas as gpd
-from shapely.geometry import Point, LineString
-from pathlib import Path
-import xml.etree.ElementTree as ET
-import requests
-import math
-from PIL import Image
-from io import BytesIO
-import csv
-import os
-import win32gui, win32ui, ctypes
-from PIL import Image
-import pyautogui
-import pytesseract
-import asyncio                       
-from bleak import BleakClient        
+import pandas as pd# type: ignore
+import numpy as np # type: ignore
+import geopandas as gpd# type: ignore
+from shapely.geometry import Point, LineString# type: ignore
+from pathlib import Path# type: ignore
+import xml.etree.ElementTree as ET# type: ignore
+import requests# type: ignore
+import math# type: ignore
+from PIL import Image# type: ignore
+from io import BytesIO# type: ignore
+import csv# type: ignore
+import os# type: ignore
+import win32gui, win32ui, ctypes# type: ignore
+from PIL import Image# type: ignore
+import pyautogui# type: ignore
+import pytesseract# type: ignore
+import asyncio        # type: ignore               
+from bleak import BleakClient      # type: ignore  
 import struct                       
 APP_FOLDER_PATH = Path(__file__).parent
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
@@ -84,17 +84,17 @@ def save_config_preset(preset_name, distbbox, speedbbox, window_name):
     PRESET_SAVE_PATH = USER_CONFIG_FOLDER_PATH / f'{preset_name}.csv'
     
     if os.path.exists(PRESET_SAVE_PATH):
-        raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")# If preset file already exists → error out
+        raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")           #  If preset file already exists we get error
 
     
-    with open(PRESET_SAVE_PATH, mode='w', newline='', encoding='utf-8') as f:# Create new file and write data
+    with open(PRESET_SAVE_PATH, mode='w', newline='', encoding='utf-8') as f:                           # Create new file and write data
         writer = csv.writer(f)
 
         
-        writer.writerow(["preset_name", "distbbox", "speedbbox", "window_name"])# Always write header (new file)
+        writer.writerow(["preset_name", "distbbox", "speedbbox", "window_name"])                        # Always write header (new file)
 
        
-        writer.writerow([preset_name, distbbox, speedbbox, window_name]) # Write preset values
+        writer.writerow([preset_name, distbbox, speedbbox, window_name])                                # Write preset values
 
     print(f"Preset '{preset_name}' created at {PRESET_SAVE_PATH}")
     return PRESET_SAVE_PATH
@@ -508,7 +508,7 @@ def capture_window_region(title, dist_bbox, speed_bbox):
 
 
 def extract_number_from_image(img):
-    tesseract_path = r"C:\Users\Thomas\Main\freeride\tesseract\tesseract.exe"
+    tesseract_path = APP_FOLDER_PATH / "freeride" / "Tesseract" / "tesseract.exe"
     pytesseract.pytesseract.tesseract_cmd = tesseract_path
     text = pytesseract.image_to_string(img, config='--psm 7')  # single line
     text = text.strip().replace(',', '')
@@ -687,8 +687,8 @@ async def fx_connect_to_device():
         else:
             print("Failed to connect.")
 
-# Run the async function
-asyncio.run(fx_connect_to_device())
+# # Run the async function
+# asyncio.run(fx_connect_to_device())
 
 
 
