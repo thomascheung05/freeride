@@ -86,26 +86,24 @@ def save_config_preset(preset_name, distbbox, speedbbox, window_name):
     if os.path.exists(PRESET_SAVE_PATH):
         raise FileExistsError(f"Preset '{preset_name}' already exists at {PRESET_SAVE_PATH}")           #  If preset file already exists we get error
 
-    
     with open(PRESET_SAVE_PATH, mode='w', newline='', encoding='utf-8') as f:                           # Create new file and write data
         writer = csv.writer(f)
-
-        
         writer.writerow(["preset_name", "distbbox", "speedbbox", "window_name"])                        # Always write header (new file)
-
-       
         writer.writerow([preset_name, distbbox, speedbbox, window_name])                                # Write preset values
 
     print(f"Preset '{preset_name}' created at {PRESET_SAVE_PATH}")
+
     return PRESET_SAVE_PATH
 
 
 def load_config_preset(preset_name):
+    
     PRESET_SAVE_PATH = USER_CONFIG_FOLDER_PATH / f'{preset_name}.csv'
+
     with open(PRESET_SAVE_PATH, mode='r', encoding='utf-8') as f:
+
         reader = csv.DictReader(f)
 
-        
         for row in reader:# Read the first (and only) row
             
             distbbox = tuple(map(int, row["distbbox"].strip("()").split(",")))# Convert bbox strings "10,20,30,40" → tuple of ints
@@ -687,8 +685,8 @@ async def fx_connect_to_device():
         else:
             print("Failed to connect.")
 
-# # Run the async function
-# asyncio.run(fx_connect_to_device())
+# Run the async function
+asyncio.run(fx_connect_to_device())
 
 
 
