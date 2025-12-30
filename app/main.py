@@ -22,6 +22,8 @@ import pandas as pd
 CURRENT_CONFIG = {}
 LAST_REC_DIST = None
 LAST_DIST_ALONG_ROUTE = None
+FIRST_GOOGLE_IMAGE = None
+LAST_GOOGLE_IMAGE = None
 APP_FOLDER_PATH = Path(__file__).parent
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
 USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
@@ -275,7 +277,6 @@ def get_position():
         else:
             should_pull_image = False
             
-
     print("="*90)
     print("NEW POSITION RECORDED")
     print("="*90)
@@ -305,8 +306,10 @@ def get_position():
         print("-------> Image Success!")
     else:
         print(f'-------> Skipping image (moved {d}m since last image)')
-        latest_steet_img_b64 = None  # now it's safely defined
+        latest_steet_img_b64 = None 
+
     print("="*90)    
+
     return jsonify({
         "distance": latest_distance,
         "speed": latest_speed,
@@ -331,7 +334,7 @@ def get_position():
 def freeride_stop():
     global CURRENT_CONFIG, LAST_REC_DIST, LAST_DIST_ALONG_ROUTE
     if CURRENT_CONFIG:
-        # Pick variables you want to save
+         
         ride_data = {
             "route_name": CURRENT_CONFIG.get("route_name", ""),
             "latest_distance": CURRENT_CONFIG.get("latest_distance", 0),
@@ -341,7 +344,7 @@ def freeride_stop():
             "timestamp": time.time()  # optional: record when the ride stopped
         }
 
-        # Make sure file exists; write header if new
+         
         SAVE_FILE = USER_RIDES_FOLDER_PATH / 'SAVED_RIDES.csv'
         file_exists = SAVE_FILE.exists()
         with open(SAVE_FILE, "a", newline="", encoding="utf-8") as f:
@@ -351,7 +354,7 @@ def freeride_stop():
             writer.writerow(ride_data)
 
 
-    # Clear global state
+    
     CURRENT_CONFIG = {}
     LAST_REC_DIST = None
     LAST_DIST_ALONG_ROUTE = None
