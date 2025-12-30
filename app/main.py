@@ -20,10 +20,6 @@ import base64
 import pandas as pd
 
 CURRENT_CONFIG = {}
-LAST_REC_DIST = None
-LAST_DIST_ALONG_ROUTE = None
-FIRST_GOOGLE_IMAGE = None
-LAST_GOOGLE_IMAGE = None
 APP_FOLDER_PATH = Path(__file__).parent
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
 USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
@@ -178,7 +174,7 @@ def freeride_run():
 
     preset_name = data["preset_name"]
     route_name = data["route"]
-    start_dist = data["start_dist"]
+    start_dist = int(data["start_dist"])
 
     if preset_name == '' and route_name == '':
         print("NO preset or route was selected")
@@ -211,9 +207,12 @@ def freeride_run():
     CURRENT_CONFIG["speed_bbox"] = preset["speedbbox"]
     CURRENT_CONFIG["window_name"] = preset["window_name"]
     CURRENT_CONFIG["route_name"] = route_name
-    CURRENT_CONFIG["latest_distance"] = start_dist
+    CURRENT_CONFIG["last_rec_distance"] = None
+    CURRENT_CONFIG["last_distance_along_route"] = None
     CURRENT_CONFIG["start_dist"] = start_dist
     CURRENT_CONFIG["route"] = route
+    CURRENT_CONFIG["last_google_image"] = None
+    
 
     return jsonify({
         "status": "ready",
@@ -234,47 +233,48 @@ def freeride_run():
 # Get poll position, run every interval
 ####################################################################################################################
 def get_position():
+    global CURRENT_CONFIG
     cfg = CURRENT_CONFIG
-    global LAST_REC_DIST
-    global LAST_DIST_ALONG_ROUTE 
 
     latest_distance, latest_speed, window_not_found_flag = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
+    
+    # Return an error if the window was not found when trying to get the image
     if window_not_found_flag == True:
         return jsonify({
             "status": "error",
             "message": "The capture window was not found"
         }), 400
-    
-    #latest_distance = latest_distance + cfg["start_dist"]
-
+    print(latest_distance)
+    latest_distance = latest_distance + cfg["start_dist"]
+    print(latest_distance)
     if pd.isna(latest_distance):
-        latest_distance = LAST_REC_DIST
-        
+        if cfg['last_rec_distance'] == None:
+            latest_distance = 0
+        else:
+            latest_distance = cfg['last_rec_distance']
+    if latest_speed is None or math.isnan(latest_speed):
+        latest_speed = 9999999 
+
     cord_row = get_cord_from_dist_along_route(cfg["route"], latest_distance)
 
     dist_along_route = cord_row.distance_along_m
     lat = float(cord_row.geometry.y)
     lon = float(cord_row.geometry.x)    
-    
 
-    if latest_speed is None or math.isnan(latest_speed):
-        latest_speed = 9999999     
-
-
+    # Determine if we should pull and display a new image or not
     should_pull_image = False
-    if LAST_REC_DIST is None:
+    if cfg['last_rec_distance'] is None:                # if this is the first time polling position
         should_pull_image = True
-        LAST_REC_DIST = latest_distance
-        LAST_DIST_ALONG_ROUTE = dist_along_route
-        d = 25
+        cfg['last_rec_distance'] = latest_distance
+        cfg['last_distance_along_route'] = dist_along_route
+        distance_traveled = 0
     else:
-        d = latest_distance - LAST_REC_DIST
-
-        if d > 25 and LAST_DIST_ALONG_ROUTE != dist_along_route:                 # moved more than 15 m
+        distance_traveled = latest_distance - cfg['last_rec_distance']
+        if distance_traveled > 25 and cfg['last_distance_along_route'] != dist_along_route:                 # moved more than 15 m
             should_pull_image = True
-            LAST_REC_DIST = latest_distance  
-            LAST_DIST_ALONG_ROUTE = dist_along_route
-        else:
+            cfg['last_rec_distance'] = latest_distance  
+            cfg['last_distance_along_route'] = dist_along_route
+        else:           # Dont think we need this here actually
             should_pull_image = False
             
     print("="*90)
@@ -291,7 +291,7 @@ def get_position():
 
     latest_steet_img = None
     if should_pull_image:
-        print(f'-------> Pulling new StreetView image (moved {d}m since last image)')
+        print(f'-------> Pulling new StreetView image (moved {distance_traveled}m since last image)')
         
         def encode_image_to_base64(image_io):
             import base64
@@ -305,7 +305,7 @@ def get_position():
         latest_steet_img_b64 = encode_image_to_base64(latest_steet_img)
         print("-------> Image Success!")
     else:
-        print(f'-------> Skipping image (moved {d}m since last image)')
+        print(f'-------> Skipping image (moved {distance_traveled}m since last image)')
         latest_steet_img_b64 = None 
 
     print("="*90)    
@@ -332,7 +332,8 @@ def get_position():
 # Stop freeride from running 
 ####################################################################################################################
 def freeride_stop():
-    global CURRENT_CONFIG, LAST_REC_DIST, LAST_DIST_ALONG_ROUTE
+    global CURRENT_CONFIG
+    cfg = CURRENT_CONFIG
     if CURRENT_CONFIG:
          
         ride_data = {
@@ -356,8 +357,8 @@ def freeride_stop():
 
     
     CURRENT_CONFIG = {}
-    LAST_REC_DIST = None
-    LAST_DIST_ALONG_ROUTE = None
+    CURRENT_CONFIG['last_rec_distance'] = None
+    CURRENT_CONFIG['last_distance_along_route'] = None
 
     print("="*10)
     print("FREERIDE STOPPED: global variables cleared")
