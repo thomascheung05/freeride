@@ -10,3 +10,4 @@ pywin32
 pygetwindow
 pyautogui
 Pillow
+pyarrow

@@ -10,13 +10,14 @@ from data import (
                  get_window_relative_bbox,
                  list_visible_windows,
                  get_data_once)
-import csv# type: ignore
-import os# type: ignore
-from flask import Flask, json,request, jsonify# type: ignore
-from pathlib import Path# type: ignore
-from io import BytesIO# type: ignore
-import time# type: ignore
-import base64# type: ignore
+import csv 
+import os 
+from flask import Flask, json,request, jsonify 
+from pathlib import Path 
+from io import BytesIO 
+import time 
+import base64 
+import pandas as pd
 
 CURRENT_CONFIG = {}
 LAST_REC_DIST = None
@@ -135,7 +136,7 @@ def freeride_run():
     CURRENT_CONFIG["window_name"] = preset["window_name"]
     CURRENT_CONFIG["route_name"] = route_name
     CURRENT_CONFIG["latest_distance"] = start_dist
-    
+    CURRENT_CONFIG["start_dist"] = start_dist
     route = load_in_processed_route(route_name)
     CURRENT_CONFIG["route"] = route
     route_line = convert_gdf_to_lines(route)
@@ -151,30 +152,35 @@ def freeride_run():
 @app.route("/api/get_position", methods=["GET"])
 def get_position():
     cfg = CURRENT_CONFIG
-    latest_distance, latest_speed = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
-
-    route = cfg["route"]
-    cord_row = get_cord_from_dist_along_route(route, latest_distance)
-    lat = float(cord_row.geometry.y)
-    lon = float(cord_row.geometry.x)
-    dist_along_route = cord_row.distance_along_m
-    if latest_speed is None or math.isnan(latest_speed):
-        latest_speed = 9999999     
- 
-    # sometimes, cord_row.distance_along_m value is the same as last record, the points are spaced out enough so i did not make it to the next point
-    # Add a check here, if cord_row.distance_along_m is the same as last time, dont pull an image
-    should_pull_image = False
     global LAST_REC_DIST
     global LAST_DIST_ALONG_ROUTE 
+    latest_distance, latest_speed = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
+    #latest_distance = latest_distance + cfg["start_dist"]
+
+    if pd.isna(latest_distance):
+        latest_distance = LAST_REC_DIST
+        
+    cord_row = get_cord_from_dist_along_route(cfg["route"], latest_distance)
+
+    dist_along_route = cord_row.distance_along_m
+    lat = float(cord_row.geometry.y)
+    lon = float(cord_row.geometry.x)    
+    
+
+    if latest_speed is None or math.isnan(latest_speed):
+        latest_speed = 9999999     
+
+
+    should_pull_image = False
     if LAST_REC_DIST is None:
         should_pull_image = True
         LAST_REC_DIST = latest_distance
         LAST_DIST_ALONG_ROUTE = dist_along_route
-        d = 15
+        d = 25
     else:
         d = latest_distance - LAST_REC_DIST
 
-        if d > 15 and LAST_DIST_ALONG_ROUTE != dist_along_route:                 # moved more than 15 m
+        if d > 25 and LAST_DIST_ALONG_ROUTE != dist_along_route:                 # moved more than 15 m
             should_pull_image = True
             LAST_REC_DIST = latest_distance  
             LAST_DIST_ALONG_ROUTE = dist_along_route
@@ -196,7 +202,7 @@ def get_position():
 
     latest_steet_img = None
     if should_pull_image:
-        print(f'------->Pulling new StreetView image (moved {d}m)')
+        print(f'-------> Pulling new StreetView image (moved {d}m since last image)')
         
         def encode_image_to_base64(image_io):
             import base64
@@ -210,7 +216,7 @@ def get_position():
         latest_steet_img_b64 = encode_image_to_base64(latest_steet_img)
         print("-------> Image Success!")
     else:
-        print(f'------->Skipping image ((moved {d}m)')
+        print(f'-------> Skipping image (moved {d}m since last image)')
         latest_steet_img_b64 = None  # now it's safely defined
     print("="*90)    
     return jsonify({

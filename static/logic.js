@@ -22,7 +22,7 @@ document.getElementById("stopRoute").addEventListener("click", async () => {
             freerideInterval = null;
             console.log("Freeride runner stopped (client).");
         }
-        const defaultImgSrc = "/static/img/duck.jpg"; // replace with your default image
+        const defaultImgSrc = "/static/img/bikesinmountains.jpg";  
         const imageElems = ["image", "smallImage"];
         imageElems.forEach(id => {
             const el = document.getElementById(id);
@@ -98,23 +98,23 @@ async function freerideRun() {
     // Snap small map to the first point of the route
     smallMap.setView([firstCoord[1], firstCoord[0]], 15);
 
-    // Create a bicycle icon
+    // bicycle icon
     const bikeIcon = L.icon({
-        iconUrl: '/static/img/bike.jpg', // replace with your bicycle image path
-        iconSize: [32, 32], // adjust size as needed
-        iconAnchor: [16, 16] // anchor so it points at the coordinate
+        iconUrl: '/static/img/bike.jpg',  
+        iconSize: [32, 32],  
+        iconAnchor: [16, 16]  
     });
 
-    // Place the bicycle marker at the first point
+     
     smallbikeMarker = L.marker([firstCoord[1], firstCoord[0]], { icon: bikeIcon }).addTo(smallMap);
     bigbikeMarker = L.marker([firstCoord[1], firstCoord[0]], { icon: bikeIcon }).addTo(smallMap);
 
 
-    // Start polling for position updates
+     
     
 
     pollPosition(); // first immediate call
-    freerideInterval = setInterval(pollPosition, 10000); // store interval ID
+    freerideInterval = setInterval(pollPosition, 3000); // store interval ID
 }
 
 
@@ -135,10 +135,11 @@ async function pollPosition() {
             document.getElementById("smallImage").src =
                 "data:image/png;base64," + data.image;
         }
-        if (smallbikeMarker && data.lat && data.lon) {
+
+        if (smallbikeMarker && Number.isFinite(data.lat) && Number.isFinite(data.lon)) {
             smallbikeMarker.setLatLng([data.lat, data.lon]);
         }
-        if (bigbikeMarker && data.lat && data.lon) {
+        if (bigbikeMarker && Number.isFinite(data.lat) && Number.isFinite(data.lon)) {
             bigbikeMarker.setLatLng([data.lat, data.lon]);
         }
 
@@ -278,7 +279,7 @@ async function initUI() {
     }
     const data = await response.json();
 
-    // NEW: populate dropdowns
+    
     fillDropDown("userPresetName", data.config_presets);
     fillDropDown("userRouteToProcess", data.unprocessed_files);
     fillDropDown("userRoute", data.processed_files);
@@ -311,12 +312,12 @@ async function initUI() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Fullscreen map
     map = L.map('map', { zoomControl: false }).setView([45.5017, -73.5673], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.thunderforest.com/mobile-atlas/{z}/{x}/{y}.png?apikey=17dc0c0df61f47d4b13d3520ec5b1557', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
     // Small map
     smallMap = L.map('smallMap', { zoomControl: false }).setView([45.5017, -73.5673], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.thunderforest.com/mobile-atlas/{z}/{x}/{y}.png?apikey=17dc0c0df61f47d4b13d3520ec5b1557', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(smallMap);
 
