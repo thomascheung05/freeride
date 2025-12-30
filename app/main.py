@@ -45,7 +45,17 @@ def serve_html():
 
 
 
+
+
+
+
+
+
+
 @app.route('/api/get_window', methods=['GET'])
+####################################################################################################################
+# User Configuration: Show all open windows
+####################################################################################################################
 def get_window():
     windows = list_visible_windows()
     formatted_windows = "\n".join([f"Title: {title}, HWND: {hwnd}" for hwnd, title in windows])
@@ -53,12 +63,22 @@ def get_window():
 
 
 
+
+
+
+
+
+
+
 @app.route('/api/get_bbox', methods=['POST'])
+####################################################################################################################
+# User Configuration: Get bounding box coordinates
+####################################################################################################################
 def get_bbox():
     data = request.get_json()
     USER_WINDOW_NAME = data.get("window_name", "")
     if not USER_WINDOW_NAME:
-        USER_WINDOW_NAME = "No Window Name Inputed"
+        USER_WINDOW_NAME = " No Window Name Inputed"
 
     bbox, screenshot = get_window_relative_bbox(USER_WINDOW_NAME)
     if bbox is None or screenshot is None:
@@ -76,7 +96,41 @@ def get_bbox():
 
 
 
+
+
+
+
+
+
+
+@app.route('/api/process_route', methods=['POST'])
+####################################################################################################################
+# User Configuration: Process and Save an unprocessed route
+####################################################################################################################
+def process_route():
+    data = request.get_json()
+
+    route_name = data.get("route_to_process")
+    
+    process_gpx_route(route_name)
+    return jsonify({
+            "status": "success",
+            "message": f"Preset '{route_name}' saved successfully."
+        }), 200
+
+
+
+
+
+
+
+
+
+
 @app.route('/api/save_preset', methods=['POST'])
+####################################################################################################################
+# User Configuration: Save Preset user created
+####################################################################################################################
 def save_preset():
     data = request.get_json()
 
@@ -106,21 +160,17 @@ def save_preset():
 
 
 
-@app.route('/api/process_route', methods=['POST'])
-def process_route():
-    data = request.get_json()
 
-    route_name = data.get("route_to_process")
-    
-    process_gpx_route(route_name)
-    return jsonify({
-            "status": "success",
-            "message": f"Preset '{route_name}' saved successfully."
-        }), 200
+
+
+
 
 
 
 @app.route('/api/freeride_run', methods=['POST'])
+####################################################################################################################
+# FREERIDE MAIN RUNNER
+####################################################################################################################
 def freeride_run():
     data = request.get_json()
 
@@ -128,19 +178,40 @@ def freeride_run():
     route_name = data["route"]
     start_dist = data["start_dist"]
 
+    if preset_name == '' and route_name == '':
+        print("NO preset or route was selected")
+        return jsonify({
+            "status": "error",
+            "message": "No preset or route selected"
+        }), 400
+    elif preset_name == '':
+        print("NO preset was selected")
+        return jsonify({
+            "status": "error",
+            "message": "NO preset was selected"
+        }), 400
+    elif route_name == '':
+        print("NO route was selected")
+        return jsonify({
+            "status": "error",
+            "message": "NO route was selected"
+        }), 400
+
+        
+
     preset = load_config_preset(preset_name)
 
-    
+    route = load_in_processed_route(route_name)
+    route_line = convert_gdf_to_lines(route)
+    route_line_geojson = json.loads(route_line.to_json())
+
     CURRENT_CONFIG["dist_bbox"] = preset["distbbox"]
     CURRENT_CONFIG["speed_bbox"] = preset["speedbbox"]
     CURRENT_CONFIG["window_name"] = preset["window_name"]
     CURRENT_CONFIG["route_name"] = route_name
     CURRENT_CONFIG["latest_distance"] = start_dist
     CURRENT_CONFIG["start_dist"] = start_dist
-    route = load_in_processed_route(route_name)
     CURRENT_CONFIG["route"] = route
-    route_line = convert_gdf_to_lines(route)
-    route_line_geojson = json.loads(route_line.to_json())
 
     return jsonify({
         "status": "ready",
@@ -149,12 +220,29 @@ def freeride_run():
     
 
 
+
+
+
+
+
+
+
 @app.route("/api/get_position", methods=["GET"])
+####################################################################################################################
+# Get poll position, run every interval
+####################################################################################################################
 def get_position():
     cfg = CURRENT_CONFIG
     global LAST_REC_DIST
     global LAST_DIST_ALONG_ROUTE 
-    latest_distance, latest_speed = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
+
+    latest_distance, latest_speed, window_not_found_flag = get_data_once(cfg["window_name"], cfg["dist_bbox"], cfg["speed_bbox"], 'km')
+    if window_not_found_flag == True:
+        return jsonify({
+            "status": "error",
+            "message": "The capture window was not found"
+        }), 400
+    
     #latest_distance = latest_distance + cfg["start_dist"]
 
     if pd.isna(latest_distance):
@@ -229,7 +317,17 @@ def get_position():
 
 
 
+
+
+
+
+
+
+
 @app.route('/api/freeride_stop', methods=['POST'])
+####################################################################################################################
+# Stop freeride from running 
+####################################################################################################################
 def freeride_stop():
     global CURRENT_CONFIG, LAST_REC_DIST, LAST_DIST_ALONG_ROUTE
     if CURRENT_CONFIG:
@@ -266,7 +364,17 @@ def freeride_stop():
 
 
 
+
+
+
+
+
+
+
 @app.route('/api/init_ui', methods=['GET'])
+####################################################################################################################
+# Initiate the User Interface
+####################################################################################################################
 def init_ui():
     # Helper to strip extensions
     def strip_ext(file_list):
@@ -311,6 +419,13 @@ def init_ui():
         "processed_files": processed_files,
         "config_presets": config_presets
     })
+
+
+
+
+
+
+
 
 
 

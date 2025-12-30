@@ -443,19 +443,23 @@ def get_window_relative_bbox(window_title):
 
     bbox = (rel_left, rel_top, rel_right, rel_bottom)
     print(f"Bounding box relative to window: {bbox}")
-    screenshot = capture_window_region(window_title, bbox, speed_bbox= None)
+    dist_cropped_img, speed_cropped_img, window_not_found_flag = capture_window_region(window_title, bbox, speed_bbox= None)
 
-    return bbox, screenshot
-
-
+    return bbox, dist_cropped_img
 
 
 
+###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+# This should only input 1 bounding box, and output 1 image, should call fucntion multiple times if we want distance and speed
+###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#####################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
 def capture_window_region(title, dist_bbox, speed_bbox):
     hwnd = win32gui.FindWindow(None, title) # stores the window in this variable
+
+    window_not_found_flag = False
     if not hwnd:
-        print("Window not found!")
-        return None
+        window_not_found_flag = True
+        print('Window Not Found')
+        return None, None, window_not_found_flag
     
     left, top, right, bottom = win32gui.GetClientRect(hwnd) # gets the dimensions of the window
     width = right - left
@@ -480,15 +484,8 @@ def capture_window_region(title, dist_bbox, speed_bbox):
 
     
     dist_cropped_img = img.crop(dist_bbox)    # crops the image to only the bounding box
-    if speed_bbox != None:
-        speed_cropped_img = img.crop(speed_bbox)
-        # free up resources 
-        win32gui.DeleteObject(bmp.GetHandle())
-        saveDC.DeleteDC()
-        mfcDC.DeleteDC()
-        win32gui.ReleaseDC(hwnd, hwndDC)
+    speed_cropped_img = img.crop(speed_bbox)
 
-        return dist_cropped_img, speed_cropped_img
            
 
     win32gui.DeleteObject(bmp.GetHandle())
@@ -496,7 +493,7 @@ def capture_window_region(title, dist_bbox, speed_bbox):
     mfcDC.DeleteDC()
     win32gui.ReleaseDC(hwnd, hwndDC)
 
-    return dist_cropped_img
+    return dist_cropped_img, speed_cropped_img, window_not_found_flag
 
 
 
@@ -518,7 +515,10 @@ def extract_number_from_image(img):
 
 def get_data_once(window_title, distbbox, speedbbox, distance_units):
 
-    dist_img, speed_img = capture_window_region(window_title, distbbox, speedbbox)
+    dist_img, speed_img, window_not_found_flag = capture_window_region(window_title, distbbox, speedbbox)
+
+    if window_not_found_flag == True:
+        return None, None, window_not_found_flag
 
     distance = extract_number_from_image(dist_img)
     if distance is None:
@@ -533,9 +533,9 @@ def get_data_once(window_title, distbbox, speedbbox, distance_units):
         speed = extract_number_from_image(speed_img)
         if speed is None:
             speed = np.nan
-        return distance, speed
+        return distance, speed, window_not_found_flag
 
-    return distance
+    return distance, None, window_not_found_flag
 
 
 

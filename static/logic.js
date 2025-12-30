@@ -14,6 +14,12 @@ document.getElementById("bboxmodalClose").addEventListener("click", () => {docum
 document.getElementById("savePreset").addEventListener("click", savePreset);
 document.getElementById("processRoute").addEventListener("click", processRoute);
 document.getElementById("startRoute").addEventListener("click", freerideRun);
+document.getElementById("configButton").addEventListener("click", showConfigModal);
+document.getElementById("configmodalClose").addEventListener("click", () => {document.getElementById("configModal").classList.add("hidden");});
+
+
+
+
 document.getElementById("stopRoute").addEventListener("click", async () => {
     try {
         // Stop polling on the client side
@@ -43,9 +49,6 @@ document.getElementById("stopRoute").addEventListener("click", async () => {
         console.error("Error stopping freeride:", err);
     }
 });
-document.getElementById("configButton").addEventListener("click", showConfigModal);
-document.getElementById("configmodalClose").addEventListener("click", () => {document.getElementById("configModal").classList.add("hidden");});
-
 
 
 
@@ -66,6 +69,11 @@ async function freerideRun() {
     });
 
     const data = await response.json();
+    if (!response.ok) {
+        console.error("Freeride error:", data.message);
+        alert(data.message); // or show in UI
+        return;
+    }
 
     // Remove previous layers if they exist
     if (routeLayer) {
@@ -79,10 +87,9 @@ async function freerideRun() {
     routeLayer = L.geoJSON(data.route, {
         style: {
             color: 'orange', // set color to orange
-            weight: 3
+            weight: 6
         }
     }).addTo(map);
-
     // Snap main map to the first point of the route
     const firstCoord = data.route.features[0].geometry.coordinates[0]; // [lng, lat]
     map.setView([firstCoord[1], firstCoord[0]], 15); // 15 is zoom level
@@ -91,10 +98,9 @@ async function freerideRun() {
     smallrouteLayer = L.geoJSON(data.route, {
         style: {
             color: 'orange', // set color to orange
-            weight: 3
+            weight: 6
         }
     }).addTo(smallMap);
-
     // Snap small map to the first point of the route
     smallMap.setView([firstCoord[1], firstCoord[0]], 15);
 
@@ -125,7 +131,15 @@ async function pollPosition() {
     try {
         const response = await fetch("/api/get_position");
         const data = await response.json();
+        if (!response.ok) {
+            console.error("Freeride error:", data.message);
+            alert(data.message);
+            clearInterval(freerideInterval);
+            freerideInterval = null;  
+            return;
+        }
         console.log("Position update:", data);
+
 
         if (data.image) {
             document.getElementById("image").src =
