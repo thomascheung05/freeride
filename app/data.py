@@ -104,6 +104,7 @@ def load_config_preset(preset_name):
         for row in reader:# Read the first (and only) row
             
             distbbox = tuple(map(int, row["distbbox"].strip("()").split(",")))# Convert bbox strings "10,20,30,40" → tuple of ints
+            
             speedbbox = tuple(map(int, row["speedbbox"].strip("()").split(",")))
             window_name = row["window_name"]
 

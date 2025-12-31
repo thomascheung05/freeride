@@ -338,11 +338,11 @@ def freeride_stop():
          
         ride_data = {
             "route_name": CURRENT_CONFIG.get("route_name", ""),
-            "latest_distance": CURRENT_CONFIG.get("latest_distance", 0),
+            "latest_distance": CURRENT_CONFIG.get("last_rec_distance", 0),
             "dist_bbox": CURRENT_CONFIG.get("dist_bbox", ""),
             "speed_bbox": CURRENT_CONFIG.get("speed_bbox", ""),
             "window_name": CURRENT_CONFIG.get("window_name", ""),
-            "timestamp": time.time()  # optional: record when the ride stopped
+            "timestamp": time.time() 
         }
 
          
