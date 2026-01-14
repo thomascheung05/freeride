@@ -13,7 +13,8 @@ import csv
 import os 
 from PIL import Image 
 import pyautogui 
-import pytesseract                      
+import pytesseract    
+import datetime                  
 APP_FOLDER_PATH = Path(__file__).parent
 STATIC_FOLDER_PATH = APP_FOLDER_PATH.parent / 'static'
 USER_SAVE_FOLDER_PATH = APP_FOLDER_PATH.parent / 'usersaves'
@@ -534,11 +535,12 @@ def get_data_once(window_title, distbbox, speedbbox, distance_units):
 ########################################################################
 import Quartz
 
-def find_quicktime_window():
+def find_qt_window():
     windows = Quartz.CGWindowListCopyWindowInfo(
         Quartz.kCGWindowListOptionOnScreenOnly,
         Quartz.kCGNullWindowID
     )
+
 
     for w in windows:
         if w.get("kCGWindowOwnerName") == "QuickTime Player":
@@ -547,8 +549,114 @@ def find_quicktime_window():
     return None
 
 
-w = find_quicktime_window
-print(w)
+def capture_qt_window_region(bbox):
+    """
+    bbox = (left, top, right, bottom) relative to QuickTime window
+    """
+    qt_window = find_qt_window()
+    if not qt_window:
+        print("QuickTime Player window not found")
+        return None, True
+
+    bounds = qt_window["kCGWindowBounds"]
+    win_x = int(bounds["X"])
+    win_y = int(bounds["Y"])
+    win_w = int(bounds["Width"])
+    win_h = int(bounds["Height"])
+
+    left, top, right, bottom = bbox
+
+    # Convert to absolute screen coords
+    abs_left = win_x + left
+    abs_top = win_y + top
+    abs_width = right - left
+    abs_height = bottom - top
+
+    rect = Quartz.CGRectMake(abs_left, abs_top, abs_width, abs_height)
+
+    image_ref = Quartz.CGWindowListCreateImage(
+        rect,
+        Quartz.kCGWindowListOptionOnScreenOnly,
+        Quartz.kCGNullWindowID,
+        Quartz.kCGWindowImageDefault
+    )
+
+    if not image_ref:
+        print("Failed to capture screen region")
+        return None, False
+
+    width = Quartz.CGImageGetWidth(image_ref)
+    height = Quartz.CGImageGetHeight(image_ref)
+
+    data = Quartz.CGDataProviderCopyData(
+        Quartz.CGImageGetDataProvider(image_ref)
+    )
+    import Quartz.CoreGraphics as CG
+
+    bytes_per_row = CG.CGImageGetBytesPerRow(image_ref) 
+    img = Image.frombuffer(
+        "RGBA",
+        (width, height),
+        data,
+        "raw",
+        "BGRA",
+        bytes_per_row,
+        1
+    )
+
+    return img, False
+
+
+def get_qt_relative_bbox():
+    qt_window = find_qt_window()
+    if not qt_window:
+        print("QuickTime Player window not found!")
+        return None, None
+
+    bounds = qt_window["kCGWindowBounds"]
+
+    win_x = int(bounds["X"])
+    win_y = int(bounds["Y"])
+    win_w = int(bounds["Width"])
+    win_h = int(bounds["Height"])
+
+    print(f"QuickTime window bounds: x={win_x}, y={win_y}, w={win_w}, h={win_h}")
+
+    # Let user pick bbox visually
+    print("Move mouse to TOP-LEFT of the number and wait 3 seconds...")
+    time.sleep(3)
+    abs_left, abs_top = pyautogui.position()
+    print(f"Top-left: {abs_left}, {abs_top}")
+
+    print("Move mouse to BOTTOM-RIGHT of the number and wait 3 seconds...")
+    time.sleep(3)
+    abs_right, abs_bottom = pyautogui.position()
+    print(f"Bottom-right: {abs_right}, {abs_bottom}")
+
+    # Convert screen coords → window-relative coords
+    rel_left = abs_left - win_x
+    rel_top = abs_top - win_y
+    rel_right = abs_right - win_x
+    rel_bottom = abs_bottom - win_y
+
+    bbox = (rel_left, rel_top, rel_right, rel_bottom)
+    print(f"Bounding box relative to QuickTime window: {bbox}")
+
+    cropped_img, window_not_found_flag = capture_qt_window_region(bbox)
+
+    return bbox, cropped_img
+# bbox, cropped_img = get_qt_relative_bbox()
+# desktop = Path.home() / "Desktop"
+# out_path = desktop / f"quicktime_crop_1.png"
+# cropped_img.save(out_path)
+# print(f"Saved cropped image to: {out_path}")
+
+
+
+
+
+
+
 
 
 
@@ -559,10 +667,7 @@ print(w)
 # $$  __$$\ $$ |      $$  __|            
 # $$ |  $$ |$$ |      $$ |               
 # $$$$$$$  |$$$$$$$$\ $$$$$$$$\          
-# \_______/ \________|\________|         
-                                       
-                                       
-                                       
+# \_______/ \________|\________|                                                   
 # $$$$$$$\             $$\               
 # $$  __$$\            $$ |              
 # $$ |  $$ | $$$$$$\ $$$$$$\    $$$$$$\  
