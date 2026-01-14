@@ -7,7 +7,6 @@ from pathlib import Path
 import xml.etree.ElementTree as ET 
 import requests 
 import math 
-import win32gui, win32ui, ctypes 
 from PIL import Image 
 from io import BytesIO 
 import csv 
@@ -392,9 +391,15 @@ def get_streetview_image_from_coord(coord_row, fov=90, pitch=0, size="640x640"):
 # \_______/  \_______|  \____/  \_______|                                               
                                                                                       
 ########################################################################
-# WINDOWS SCREEN CAP                                                    
-########################################################################                           
-                                                                               
+# WINDOWS SCREEN CAP    
+import platform
+
+IS_WINDOWS = platform.system() == "Windows"
+if IS_WINDOWS:
+    import win32gui # type: ignore
+    import win32ui # type: ignore
+    import ctypes                                               
+########################################################################                                                                       
 def list_visible_windows():
     def enum_windows(hwnd, results):
         if win32gui.IsWindowVisible(hwnd):
@@ -479,12 +484,8 @@ def capture_window_region(title, bbox):
         bmpstr, 'raw', 'BGRX', 0, 1
     )
 
-    
     cropped_image = img.crop(bbox)    # crops the image to only the bounding box
     
-
-           
-
     win32gui.DeleteObject(bmp.GetHandle())
     saveDC.DeleteDC()
     mfcDC.DeleteDC()
@@ -531,12 +532,23 @@ def get_data_once(window_title, distbbox, speedbbox, distance_units):
 ########################################################################
 # Mac Screen Capture
 ########################################################################
+import Quartz
+
+def find_quicktime_window():
+    windows = Quartz.CGWindowListCopyWindowInfo(
+        Quartz.kCGWindowListOptionOnScreenOnly,
+        Quartz.kCGNullWindowID
+    )
+
+    for w in windows:
+        if w.get("kCGWindowOwnerName") == "QuickTime Player":
+            return w
+
+    return None
 
 
-
-
-
-
+w = find_quicktime_window
+print(w)
 
 
 
