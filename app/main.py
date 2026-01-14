@@ -127,7 +127,7 @@ def process_route():
 
 @app.route('/api/save_preset', methods=['POST'])
 ####################################################################################################################
-# User Configuration: Save Preset user created
+# User Configuration: Save Preset a user created
 ####################################################################################################################
 def save_preset():
     data = request.get_json()

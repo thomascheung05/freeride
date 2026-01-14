@@ -1,13 +1,10 @@
+flask
 pandas
+numpy
 geopandas
 shapely
 requests
+Pillow
 pyautogui
 pytesseract
-bleak
-flask
-pywin32
-pygetwindow
-pyautogui
-Pillow
-pyarrow
+pywin32; platform_system == "Windows"
