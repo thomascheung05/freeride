@@ -399,7 +399,10 @@ IS_WINDOWS = platform.system() == "Windows"
 if IS_WINDOWS:
     import win32gui # type: ignore
     import win32ui # type: ignore
-    import ctypes                                               
+    import ctypes 
+else:
+    import Quartz  # type: ignore
+    import Quartz.CoreGraphics as CG # type: ignore
 ########################################################################                                                                       
 def list_visible_windows():
     def enum_windows(hwnd, results):
@@ -533,7 +536,7 @@ def get_data_once(window_title, distbbox, speedbbox, distance_units):
 ########################################################################
 # Mac Screen Capture
 ########################################################################
-import Quartz
+
 
 def find_qt_window():
     windows = Quartz.CGWindowListCopyWindowInfo(
@@ -591,7 +594,7 @@ def capture_qt_window_region(bbox):
     data = Quartz.CGDataProviderCopyData(
         Quartz.CGImageGetDataProvider(image_ref)
     )
-    import Quartz.CoreGraphics as CG
+    
 
     bytes_per_row = CG.CGImageGetBytesPerRow(image_ref) 
     img = Image.frombuffer(
